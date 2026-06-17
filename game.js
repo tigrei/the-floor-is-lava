@@ -51,6 +51,10 @@ class Game {
   startTravel(targetPort) {
     const days = this.map.getTravelTime(this.state.currentPort, targetPort);
     if (days === null || this.state.traveling || this.state.gameOver) return;
+    if (this.isPortContested(targetPort)) {
+      this.ui.addLog(this.state.day, `Cannot set course to ${this.map.ports[targetPort].name} — port is contested.`, "bad");
+      return;
+    }
     const s = this.state;
     s.traveling = true;
     s.travelFrom = s.currentPort;
@@ -177,17 +181,50 @@ class Game {
 
   // --- Requests ---
 
+  isPortContested(portIndex) {
+    return this.requests.some(r => r.destination === portIndex && r.status === "contested");
+  }
+
+  _getSuppliedNeighborsCount(portIndex) {
+    const connected = this.map.getConnected(portIndex);
+    let count = 0;
+    for (const conn of connected) {
+      const neighborPort = this.map.ports[conn.port];
+      if (neighborPort.type === "base") {
+        count++;
+      } else {
+        const hasActiveOrContested = this.requests.some(r => 
+          r.destination === conn.port && 
+          (r.status === "active" || r.status === "contested")
+        );
+        if (!hasActiveOrContested) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
+  getContestedPorts() {
+    const s = new Set();
+    for (const r of this.requests) {
+      if (r.status === "contested") s.add(r.destination);
+    }
+    return s;
+  }
+
+  // --- Requests ---
+
   _generateRequest() {
     const sites = this.map.ports.map((p, i) => ({ p, i })).filter(x => x.p.type === "site");
-    const taken = new Set(this.requests.filter(r => r.status === "active").map(r => r.destination));
+    const taken = new Set(this.requests.filter(r => r.status === "active" || r.status === "contested").map(r => r.destination));
     const avail = sites.filter(s => !taken.has(s.i));
     if (avail.length === 0) return;
 
     const site = avail[Math.floor(Math.random() * avail.length)];
     const tmpl = REQUEST_TEMPLATES[Math.floor(Math.random() * REQUEST_TEMPLATES.length)];
     const urgency = tmpl.urgencyPool[Math.floor(Math.random() * tmpl.urgencyPool.length)];
-    const range = { high: [12, 18], medium: [18, 25], low: [25, 35] }[urgency];
-    const deadline = this.state.day + range[0] + Math.floor(Math.random() * (range[1] - range[0]));
+    const stageDaysLeft = { low: 10, medium: 8, high: 6 }[urgency];
 
     this.requests.push({
       id: this._nextId++,
@@ -195,7 +232,7 @@ class Game {
       destinationName: site.p.name,
       supplies: { ...tmpl.supplies },
       remaining: { ...tmpl.supplies },
-      deadline,
+      stageDaysLeft,
       urgency,
       mission: tmpl.mission,
       status: "active",
@@ -209,7 +246,7 @@ class Game {
   }
 
   _maybeGenerateRequest() {
-    const active = this.requests.filter(r => r.status === "active").length;
+    const active = this.requests.filter(r => r.status === "active" || r.status === "contested").length;
     if (this.state.day >= this._nextRequestDay && active < 5) {
       this._generateRequest();
       this._nextRequestDay = this.state.day + 7 + Math.floor(Math.random() * 4);
@@ -218,10 +255,38 @@ class Game {
 
   _checkDeadlines() {
     for (const req of this.requests) {
-      if (req.status === "active" && this.state.day > req.deadline) {
-        req.status = "expired";
-        this.score.failed++;
-        this.ui.addLog(this.state.day, `Request EXPIRED: ${req.mission} → ${req.destinationName}`, "bad");
+      if (req.status !== "active" && req.status !== "contested") continue;
+
+      if (req.status === "active") {
+        req.stageDaysLeft--;
+        if (req.stageDaysLeft <= 0) {
+          if (req.urgency === "low") {
+            req.urgency = "medium";
+            req.stageDaysLeft = 8;
+            this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now MEDIUM urgency.`, "neutral");
+          } else if (req.urgency === "medium") {
+            req.urgency = "high";
+            req.stageDaysLeft = 6;
+            this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now HIGH urgency!`, "bad");
+          } else if (req.urgency === "high") {
+            req.status = "contested";
+            req.urgency = "contested";
+            req.stageDaysLeft = 12; // Base 12 days to recover
+            this.score.failed++; // Counts as a failure/incident
+            this.ui.addLog(this.state.day, `CRITICAL: ${req.destinationName} is now CONTESTED! Sea lanes blocked.`, "bad");
+          }
+        }
+      } else if (req.status === "contested") {
+        const suppliedNeighbors = this._getSuppliedNeighborsCount(req.destination);
+        const recoverySpeed = 1 + suppliedNeighbors;
+        req.stageDaysLeft -= recoverySpeed;
+
+        if (req.stageDaysLeft <= 0) {
+          req.status = "active";
+          req.urgency = "high";
+          req.stageDaysLeft = 8; // 8 days at high to fulfill after recovery
+          this.ui.addLog(this.state.day, `Secured: ${req.destinationName} is no longer contested. Sea lanes reopened.`, "good");
+        }
       }
     }
   }
@@ -230,13 +295,20 @@ class Game {
     this.state.gameOver = true;
     clearTimeout(this._tickTimer);
     for (const req of this.requests) {
-      if (req.status === "active") { req.status = "expired"; this.score.failed++; }
+      if (req.status === "active" || req.status === "contested") {
+        if (req.status === "active") {
+          req.status = "expired";
+          this.score.failed++;
+        } else {
+          req.status = "expired";
+        }
+      }
     }
     this.ui.showGameOver(this.score);
   }
 
   _render() {
-    this.map.render(this.state, this.getRequestPorts());
+    this.map.render(this.state, this.getRequestPorts(), this.getContestedPorts());
     document.getElementById("day-counter").textContent = `Day ${this.state.day}`;
     document.getElementById("score-display").textContent = `Delivered: ${this.score.fulfilled}/${this.score.totalRequests}`;
   }

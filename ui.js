@@ -106,10 +106,22 @@ class UI {
     for (const { port: idx, days } of connected) {
       const target = this.game.map.ports[idx];
       const hasReq = this.game.getRequestsAtPort(idx).length > 0;
-      const badge = target.type === "base" ? '<span class="nav-badge base">BASE</span>' :
-                    (hasReq ? '<span class="nav-badge request">REQ</span>' : "");
-      html += `<button class="btn-nav" onclick="game.startTravel(${idx})">` +
-        `<span>${target.name} ${badge}</span><span class="nav-days">${days}d</span></button>`;
+      const isContested = this.game.isPortContested(idx);
+      
+      let badge = "";
+      if (isContested) {
+        badge = '<span class="nav-badge contested">CONTESTED</span>';
+      } else if (target.type === "base") {
+        badge = '<span class="nav-badge base">BASE</span>';
+      } else if (hasReq) {
+        badge = '<span class="nav-badge request">REQ</span>';
+      }
+
+      const disabledAttr = isContested ? "disabled" : "";
+      const daysText = isContested ? "Blocked" : `${days}d`;
+
+      html += `<button class="btn-nav" ${disabledAttr} onclick="game.startTravel(${idx})">` +
+        `<span>${target.name} ${badge}</span><span class="nav-days">${daysText}</span></button>`;
     }
     html += `</div>`;
 
@@ -117,22 +129,31 @@ class UI {
   }
 
   _renderRequests() {
-    const active = this.game.requests.filter(r => r.status === "active");
+    const active = this.game.requests.filter(r => r.status === "active" || r.status === "contested");
     const recent = this.game.requests.filter(r => r.status === "fulfilled" || r.status === "expired").slice(-3);
 
     let html = `<h2>Active Requests (${active.length})</h2>`;
     if (active.length === 0) html += `<div class="no-requests">No active requests</div>`;
 
     for (const req of active) {
-      const daysLeft = req.deadline - this.game.state.day;
-      const urgClass = req.urgency === "high" ? "urg-high" : (req.urgency === "medium" ? "urg-med" : "urg-low");
-      const supplyList = Object.entries(req.remaining).map(([t, n]) => `${SUPPLY_TYPES[t].short} ${n}t`).join(", ");
+      const isCont = req.status === "contested";
+      const urgClass = isCont ? "urg-contested" : (req.urgency === "high" ? "urg-high" : (req.urgency === "medium" ? "urg-med" : "urg-low"));
+      
+      let badgeText = isCont ? "CONTESTED" : req.urgency.toUpperCase();
+      let supplyList = isCont 
+        ? "Communications lost. Awaiting recovery."
+        : Object.entries(req.remaining).map(([t, n]) => `${SUPPLY_TYPES[t].short} ${n}t`).join(", ");
+      
+      let deadlineText = isCont
+        ? `Recovery ETA: ${req.stageDaysLeft} days (-${1 + this.game._getSuppliedNeighborsCount(req.destination)}d/d)`
+        : `Deadline: Day ${this.game.state.day + req.stageDaysLeft} (${req.stageDaysLeft}d left)`;
+
       html += `<div class="request-card ${urgClass}">` +
         `<div class="req-header"><span class="req-dest">${req.destinationName}</span>` +
-        `<span class="req-urgency">${req.urgency.toUpperCase()}</span></div>` +
+        `<span class="req-urgency">${badgeText}</span></div>` +
         `<div class="req-mission">${req.mission}</div>` +
-        `<div class="req-supplies">Needs: ${supplyList}</div>` +
-        `<div class="req-deadline ${daysLeft <= 3 ? "deadline-urgent" : ""}">Deadline: Day ${req.deadline} (${daysLeft}d left)</div>` +
+        `<div class="req-supplies">${isCont ? "" : "Needs: "}${supplyList}</div>` +
+        `<div class="req-deadline ${!isCont && req.stageDaysLeft <= 3 ? "deadline-urgent" : ""}">${deadlineText}</div>` +
         `</div>`;
     }
 
