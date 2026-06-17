@@ -1,0 +1,48 @@
+MARITIME WEATHER RESISTANCE FIELDS — DATA DESCRIPTION
+======================================================
+
+FILES
+  typhoon.json / squall.json / borneo_vortex.json / itcz.json / hectic.json
+
+STRUCTURE
+  { "cells": { "x_y": [r0, r1, ... r17] } }
+
+  x        0–49   west → east   (100°E – 125°E)
+  y        0–49   south → north (0°N   – 25°N)
+  r        0.0–1.0 resistance per 10-second frame
+             0.0 = free sailing
+             1.0 = impassable
+
+  18 frames, Δt = 10 s, total span = 0–170 s (≈ 3 minutes)
+
+LOOKUP
+  resistance = data["cells"]["x_y"][frame_index]
+
+SCENARIOS
+  typhoon        Eye enters east edge (~125°E, 14°N), tracks WNW toward Vietnam.
+                 Calm eye, violent eyewall (52 m/s). Resistance peaks ~0.96 at eyewall.
+
+  squall         Localised convective cell over Strait of Malacca.
+                 Bell-curve lifecycle — forms, peaks at t≈85s, dissipates.
+                 Resistance max ~0.71, rest of grid near 0.
+
+  borneo_vortex  Quasi-stationary vortex off NW Borneo under NE monsoon cold surge.
+                 Broad moderate resistance 0.27–0.95, slowly intensifying.
+
+  itcz           ITCZ/MJO monsoon trough migrating north (5°N → 10°N).
+                 Resistance band sweeps northward over 3 minutes.
+
+  hectic         All systems simultaneously active + turbulent noise.
+                 Resistance 0.40–0.96 everywhere, no safe corridor.
+
+PHYSICS
+  Resistance = 1 − (wave_penalty × windage_penalty)
+
+  wave_penalty   DNV-GL voluntary speed reduction from significant wave height Hₛ
+                 and encounter angle (head/beam/following sea).
+                 Hₛ from JONSWAP spectrum (fully-developed sea cap applied).
+                 SW Indian Ocean swell (14 s period) superposed independently.
+
+  windage_penalty  Aerodynamic drag on 800 m² superstructure at 6 m/s design speed.
+
+  No bathymetry. No land mask. Pure weather forcing.
