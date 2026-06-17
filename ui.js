@@ -1,43 +1,150 @@
 class UI {
-  constructor() {
+  constructor(game) {
+    this.game = game;
     this.els = {
-      deterrence: document.getElementById("res-deterrence"),
-      funds:      document.getElementById("res-funds"),
-      health:     document.getElementById("res-health"),
-      ship:       document.getElementById("res-ship"),
-      cargo:      document.getElementById("res-cargo"),
-      cargoMax:   document.getElementById("res-cargo-max"),
-      fuel:       document.getElementById("res-fuel"),
-      distance:   document.getElementById("res-distance"),
-      dayCounter: document.getElementById("day-counter"),
-      logEntries: document.getElementById("log-entries"),
-      overlay:    document.getElementById("modal-overlay"),
-      modalTitle: document.getElementById("modal-title"),
-      modalBody:  document.getElementById("modal-body"),
+      shipStatus:   document.getElementById("ship-status"),
+      actionsPanel: document.getElementById("actions-panel"),
+      requestsPanel: document.getElementById("requests-panel"),
+      logEntries:   document.getElementById("log-entries"),
+      overlay:      document.getElementById("modal-overlay"),
+      modalTitle:   document.getElementById("modal-title"),
+      modalBody:    document.getElementById("modal-body"),
       modalChoices: document.getElementById("modal-choices"),
     };
   }
 
-  updateResources(state) {
-    this.els.deterrence.textContent = state.deterrence;
-    this.els.funds.textContent      = state.funds;
-    this.els.health.textContent     = state.crewHealth;
-    this.els.ship.textContent       = state.shipCondition;
-    this.els.cargo.textContent      = state.cargo;
-    this.els.cargoMax.textContent   = state.maxCargo;
-    this.els.fuel.textContent       = state.fuel;
-    this.els.dayCounter.textContent = `Day ${state.day}`;
-
-    const distLeft = Math.max(0, state.totalRouteDistance - state.distanceTraveled);
-    this.els.distance.textContent = Math.round(distLeft);
-
-    this._colorize(this.els.health, state.crewHealth, 30);
-    this._colorize(this.els.ship, state.shipCondition, 25);
-    this._colorize(this.els.fuel, state.fuel, 15);
+  renderSidebar() {
+    this._renderShipStatus();
+    this._renderActions();
+    this._renderRequests();
   }
 
-  _colorize(el, value, threshold) {
-    el.style.color = value <= threshold ? "var(--danger)" : "";
+  _renderShipStatus() {
+    const s = this.game.state;
+    const total = this.game.getCargoTotal();
+    const loc = s.traveling
+      ? `In transit → ${this.game.map.ports[s.travelTo].name} (${s.travelDaysRemaining}d remaining)`
+      : `Docked at ${this.game.map.ports[s.currentPort].name}`;
+
+    let cargoHtml = "";
+    for (const [type, amt] of Object.entries(s.cargo)) {
+      if (amt > 0) cargoHtml += `<div class="cargo-row"><span>${SUPPLY_TYPES[type].short}</span><span>${amt}t</span></div>`;
+    }
+    if (!cargoHtml) cargoHtml = '<div class="cargo-empty">Empty</div>';
+
+    this.els.shipStatus.innerHTML =
+      `<h2>Ship Status</h2>` +
+      `<div class="ship-location">${loc}</div>` +
+      `<div class="cargo-bar"><span>Cargo</span><span>${total} / ${s.maxCargo}t</span></div>` +
+      `<div class="cargo-bar-visual"><div class="cargo-bar-fill" style="width:${(total / s.maxCargo) * 100}%"></div></div>` +
+      `<div class="cargo-list">${cargoHtml}</div>`;
+  }
+
+  _renderActions() {
+    const s = this.game.state;
+    if (s.traveling || s.gameOver) {
+      this.els.actionsPanel.innerHTML = "";
+      return;
+    }
+
+    const port = this.game.map.ports[s.currentPort];
+    let html = `<h2>${port.type === "base" ? "Base Operations" : "Site Operations"}</h2>`;
+
+    // Delivery section (site with active requests)
+    const reqs = this.game.getRequestsAtPort(s.currentPort);
+    if (reqs.length > 0) {
+      for (const req of reqs) {
+        html += `<div class="action-section"><div class="section-label">DELIVERY: ${req.mission}</div>`;
+        html += `<div class="delivery-grid">`;
+        for (const [type, needed] of Object.entries(req.remaining)) {
+          const have = s.cargo[type] || 0;
+          const ok = have >= needed;
+          html += `<div class="delivery-row">` +
+            `<span>${SUPPLY_TYPES[type].short}</span>` +
+            `<span>Need ${needed}t</span>` +
+            `<span>Have ${have}t</span>` +
+            `<span class="${ok ? "status-ok" : "status-need"}">${ok ? "Ready" : "Short"}</span></div>`;
+        }
+        html += `</div>`;
+        html += `<button class="btn-action btn-deliver" onclick="game.deliverCargo(${req.id})">Deliver Available Cargo</button>`;
+        html += `</div>`;
+      }
+    }
+
+    // Loading section (base)
+    if (port.type === "base") {
+      html += `<div class="action-section"><div class="section-label">LOAD SUPPLIES</div>`;
+      const types = Object.keys(SUPPLY_TYPES);
+      for (const type of types) {
+        const stock = port.inventory[type] || 0;
+        if (stock <= 0) continue;
+        const shipHas = s.cargo[type] || 0;
+        html += `<div class="load-row">` +
+          `<span class="load-name">${SUPPLY_TYPES[type].short}</span>` +
+          `<span class="load-stock">${stock}t</span>` +
+          `<span class="load-ship">${shipHas}t</span>` +
+          `<button class="btn-sm" onclick="game.loadCargo('${type}',10)">+10</button>` +
+          `<button class="btn-sm" onclick="game.loadCargo('${type}',999)">All</button>` +
+          `</div>`;
+      }
+      html += `<button class="btn-action btn-unload" onclick="game.unloadAll()">Unload All Cargo</button>`;
+
+      // Quick load buttons for active requests
+      const active = this.game.requests.filter(r => r.status === "active");
+      if (active.length > 0) {
+        html += `<div class="section-label" style="margin-top:8px">QUICK LOAD FOR REQUEST</div>`;
+        for (const req of active) {
+          html += `<button class="btn-action btn-quickload" onclick="game.quickLoad(${req.id})">Load for: ${req.destinationName}</button>`;
+        }
+      }
+      html += `</div>`;
+    }
+
+    // Navigation
+    const connected = this.game.map.getConnected(s.currentPort);
+    html += `<div class="action-section"><div class="section-label">NAVIGATE</div>`;
+    for (const { port: idx, days } of connected) {
+      const target = this.game.map.ports[idx];
+      const hasReq = this.game.getRequestsAtPort(idx).length > 0;
+      const badge = target.type === "base" ? '<span class="nav-badge base">BASE</span>' :
+                    (hasReq ? '<span class="nav-badge request">REQ</span>' : "");
+      html += `<button class="btn-nav" onclick="game.startTravel(${idx})">` +
+        `<span>${target.name} ${badge}</span><span class="nav-days">${days}d</span></button>`;
+    }
+    html += `</div>`;
+
+    this.els.actionsPanel.innerHTML = html;
+  }
+
+  _renderRequests() {
+    const active = this.game.requests.filter(r => r.status === "active");
+    const recent = this.game.requests.filter(r => r.status === "fulfilled" || r.status === "expired").slice(-3);
+
+    let html = `<h2>Active Requests (${active.length})</h2>`;
+    if (active.length === 0) html += `<div class="no-requests">No active requests</div>`;
+
+    for (const req of active) {
+      const daysLeft = req.deadline - this.game.state.day;
+      const urgClass = req.urgency === "high" ? "urg-high" : (req.urgency === "medium" ? "urg-med" : "urg-low");
+      const supplyList = Object.entries(req.remaining).map(([t, n]) => `${SUPPLY_TYPES[t].short} ${n}t`).join(", ");
+      html += `<div class="request-card ${urgClass}">` +
+        `<div class="req-header"><span class="req-dest">${req.destinationName}</span>` +
+        `<span class="req-urgency">${req.urgency.toUpperCase()}</span></div>` +
+        `<div class="req-mission">${req.mission}</div>` +
+        `<div class="req-supplies">Needs: ${supplyList}</div>` +
+        `<div class="req-deadline ${daysLeft <= 3 ? "deadline-urgent" : ""}">Deadline: Day ${req.deadline} (${daysLeft}d left)</div>` +
+        `</div>`;
+    }
+
+    if (recent.length > 0) {
+      html += `<div class="section-label" style="margin-top:12px">RECENT</div>`;
+      for (const req of recent) {
+        const cls = req.status === "fulfilled" ? "req-done" : "req-failed";
+        html += `<div class="request-mini ${cls}">${req.status === "fulfilled" ? "Fulfilled" : "Expired"}: ${req.destinationName}</div>`;
+      }
+    }
+
+    this.els.requestsPanel.innerHTML = html;
   }
 
   showEvent(event, state) {
@@ -45,215 +152,61 @@ class UI {
       this.els.modalTitle.textContent = event.name;
       this.els.modalBody.textContent  = event.description;
       this.els.modalChoices.innerHTML = "";
-      this.els.modalChoices.className = "event-choices";
 
       event.choices.forEach((choice) => {
-        const choiceDiv = document.createElement("div");
-        choiceDiv.className = "choice-option";
-
+        const div = document.createElement("div");
+        div.className = "choice-option";
         const btn = document.createElement("button");
         btn.textContent = choice.text;
         btn.addEventListener("click", () => {
           const outcome = resolveOutcome(choice);
-          const message = applyOutcome(outcome, state);
-
+          const message = applyEventOutcome(outcome, state);
           this.els.modalBody.textContent = message;
           this.els.modalChoices.innerHTML = "";
-          this.els.modalChoices.className = "";
-
-          const continueBtn = document.createElement("button");
-          continueBtn.textContent = "Continue";
-          continueBtn.addEventListener("click", () => {
-            this.hideModal();
-            resolve({ message, type: event.type });
-          });
-          this.els.modalChoices.appendChild(continueBtn);
+          const cont = document.createElement("button");
+          cont.textContent = "Continue";
+          cont.addEventListener("click", () => { this.hideModal(); resolve(message); });
+          this.els.modalChoices.appendChild(cont);
         });
-
-        const outcomesDiv = document.createElement("div");
-        outcomesDiv.className = "choice-outcomes";
-        choice.outcomes.forEach((o) => {
-          const span = document.createElement("span");
-          span.textContent = `${o.chance}% — ${o.preview}`;
-          outcomesDiv.appendChild(span);
+        const hints = document.createElement("div");
+        hints.className = "choice-outcomes";
+        choice.outcomes.forEach(o => {
+          const sp = document.createElement("span");
+          sp.textContent = `${o.chance}% — ${o.preview}`;
+          hints.appendChild(sp);
         });
-
-        choiceDiv.append(btn, outcomesDiv);
-        this.els.modalChoices.appendChild(choiceDiv);
+        div.append(btn, hints);
+        this.els.modalChoices.appendChild(div);
       });
 
       this.els.overlay.classList.remove("hidden");
     });
   }
 
-  showPort(port, gameState) {
-    return new Promise((resolve) => {
-      const tag = port.state.toUpperCase();
-      this.els.modalTitle.textContent = `[${tag}] ${port.name}`;
-      this.els.modalChoices.className = "";
-      this._renderPortContent(port, gameState, resolve);
-      this.els.overlay.classList.remove("hidden");
-    });
-  }
-
-  _renderPortContent(port, gs, resolve) {
-    this.els.modalBody.innerHTML = "";
-    this.els.modalChoices.innerHTML = "";
-
-    // Mission briefing for contested ports
-    if (port.state === "contested" && port.mission) {
-      const m = port.mission;
-      const brief = document.createElement("div");
-      brief.className = "mission-briefing";
-      brief.innerHTML =
-        `<div class="mission-title">${m.name}</div>` +
-        `<p class="mission-desc">${m.briefing}</p>` +
-        `<div class="mission-progress">Progress: ${m.delivered}/${m.cargoRequired}t delivered | Deadline: Day ${m.deadline}</div>`;
-      this.els.modalBody.appendChild(brief);
-    } else if (port.state === "secure") {
-      const desc = document.createElement("p");
-      desc.textContent = "Allied logistics hub. Resupply and repair available.";
-      desc.style.marginBottom = "12px";
-      this.els.modalBody.appendChild(desc);
-    }
-
-    // Resource summary
-    const summary = document.createElement("div");
-    summary.className = "port-resources";
-    summary.innerHTML =
-      `<span>Funds: <b>$${gs.funds}</b></span>` +
-      `<span>Fuel: <b>${gs.fuel}</b></span>` +
-      `<span>Cargo: <b>${gs.cargo}/${gs.maxCargo}t</b></span>` +
-      `<span>Health: <b>${gs.crewHealth}%</b></span>` +
-      `<span>Hull: <b>${gs.shipCondition}%</b></span>`;
-    this.els.modalBody.appendChild(summary);
-
-    // Trade buttons
-    const trades = document.createElement("div");
-    trades.className = "port-trades";
-
-    // Mission delivery (contested with active mission)
-    if (port.state === "contested" && port.mission) {
-      const m = port.mission;
-      const remaining = m.cargoRequired - m.delivered;
-      if (remaining > 0) {
-        const amt = Math.min(10, remaining);
-        const det = Math.floor(m.reward * amt / m.cargoRequired);
-        const pay = Math.floor(m.fundsReward * amt / m.cargoRequired);
-        trades.appendChild(this._tradeBtn(
-          `Deliver ${amt}t Cargo → +${det} Det, +$${pay}`,
-          () => gs.cargo >= amt,
-          () => {
-            gs.cargo -= amt;
-            gs.deterrence += det;
-            gs.funds += pay;
-            m.delivered += amt;
-            if (m.delivered >= m.cargoRequired) port.state = "secure";
-            this._renderPortContent(port, gs, resolve);
-          },
-        ));
-      }
-    }
-
-    const isSecure = port.state === "secure";
-    const fuelPrice = isSecure ? 10 : 15;
-    const repairPrice = isSecure ? 10 : 15;
-    const healPrice = isSecure ? 10 : 15;
-
-    trades.appendChild(this._tradeBtn(
-      `Resupply Fuel +10 → $${fuelPrice}`,
-      () => gs.funds >= fuelPrice && gs.fuel < 100,
-      () => { gs.funds -= fuelPrice; gs.fuel = Math.min(100, gs.fuel + 10); this._renderPortContent(port, gs, resolve); },
-    ));
-
-    trades.appendChild(this._tradeBtn(
-      `Repair Hull +20 → $${repairPrice}`,
-      () => gs.funds >= repairPrice && gs.shipCondition < 100,
-      () => { gs.funds -= repairPrice; gs.shipCondition = Math.min(100, gs.shipCondition + 20); this._renderPortContent(port, gs, resolve); },
-    ));
-
-    trades.appendChild(this._tradeBtn(
-      `Rest Crew +20 → $${healPrice}`,
-      () => gs.funds >= healPrice && gs.crewHealth < 100,
-      () => { gs.funds -= healPrice; gs.crewHealth = Math.min(100, gs.crewHealth + 20); this._renderPortContent(port, gs, resolve); },
-    ));
-
-    if (isSecure) {
-      trades.appendChild(this._tradeBtn(
-        "Load 10t Cargo → $15",
-        () => gs.funds >= 15 && gs.cargo + 10 <= gs.maxCargo,
-        () => { gs.funds -= 15; gs.cargo += 10; this._renderPortContent(port, gs, resolve); },
-      ));
-    }
-
-    this.els.modalChoices.appendChild(trades);
-
-    const sailBtn = document.createElement("button");
-    sailBtn.textContent = "Set Sail";
-    sailBtn.className = "btn-set-sail";
-    sailBtn.addEventListener("click", () => {
-      this.hideModal();
-      resolve();
-    });
-    this.els.modalChoices.appendChild(sailBtn);
-  }
-
-  _tradeBtn(text, canAfford, action) {
-    const btn = document.createElement("button");
-    btn.textContent = text;
-    btn.disabled = !canAfford();
-    btn.addEventListener("click", () => { if (canAfford()) action(); });
-    return btn;
-  }
-
-  hideModal() {
-    this.els.overlay.classList.add("hidden");
-  }
+  hideModal() { this.els.overlay.classList.add("hidden"); }
 
   addLog(day, message, type = "neutral") {
     const li = document.createElement("li");
     li.textContent = `Day ${day}: ${message}`;
-    const classMap = { bad: "event-bad", good: "event-good", port: "event-port" };
-    if (classMap[type]) li.classList.add(classMap[type]);
+    const cls = { bad: "event-bad", good: "event-good", port: "event-port" };
+    if (cls[type]) li.classList.add(cls[type]);
     this.els.logEntries.prepend(li);
-    while (this.els.logEntries.children.length > 50) {
-      this.els.logEntries.lastChild.remove();
-    }
+    while (this.els.logEntries.children.length > 40) this.els.logEntries.lastChild.remove();
   }
 
-  showGameOver(won, state, ports) {
-    this.els.modalTitle.textContent = won ? "Mission Accomplished" : "Mission Failed";
-    this.els.modalBody.innerHTML = "";
-
-    const stats = document.createElement("div");
-    stats.className = "game-over-stats";
-
-    if (won) {
-      const secured = ports.filter(p => p.mission && p.state === "secure").map(p => p.name);
-      const fallen = ports.filter(p => p.state === "fallen").map(p => p.name);
-
-      stats.innerHTML =
-        `<p>Day ${state.day} | Deterrence: <b>${state.deterrence}</b> | Funds: <b>$${state.funds}</b></p>` +
-        (secured.length ? `<p>Islands Secured: <b>${secured.join(", ")}</b></p>` : "") +
-        (fallen.length ? `<p>Islands Lost: <b>${fallen.join(", ")}</b></p>` : "") +
-        `<p style="margin-top:12px">The First Island Chain holds. Your engineering packages denied the enemy critical positions.</p>`;
-    } else {
-      const fallen = ports.filter(p => p.state === "fallen").map(p => p.name);
-      stats.innerHTML =
-        `<p>Day ${state.day} | Deterrence: <b>${state.deterrence}</b></p>` +
-        (fallen.length ? `<p>Islands Lost: <b>${fallen.join(", ")}</b></p>` : "") +
-        `<p style="margin-top:12px">The deterrence gap widens. Without Seabee support, the island garrisons cannot hold.</p>`;
-    }
-
-    this.els.modalBody.appendChild(stats);
+  showGameOver(score) {
+    this.els.modalTitle.textContent = "Mission Complete — 60-Day Report";
+    this.els.modalBody.innerHTML =
+      `<div class="game-over-stats">` +
+      `<p>Requests Fulfilled: <b>${score.fulfilled} / ${score.totalRequests}</b></p>` +
+      `<p>On Time: <b>${score.onTime}</b> | Late: <b>${score.late}</b> | Failed: <b>${score.failed}</b></p>` +
+      `<p>Total Tonnage Delivered: <b>${score.tonnageDelivered}t</b></p>` +
+      `<p>Fulfillment Rate: <b>${score.totalRequests > 0 ? Math.round((score.fulfilled / score.totalRequests) * 100) : 0}%</b></p>` +
+      `</div>`;
     this.els.modalChoices.innerHTML = "";
-    this.els.modalChoices.className = "";
     const btn = document.createElement("button");
     btn.textContent = "Play Again";
-    btn.addEventListener("click", () => {
-      this.hideModal();
-      window.location.reload();
-    });
+    btn.addEventListener("click", () => { this.hideModal(); window.location.reload(); });
     this.els.modalChoices.appendChild(btn);
     this.els.overlay.classList.remove("hidden");
   }

@@ -1,202 +1,244 @@
 class Game {
   constructor() {
     this.map = new GameMap("map-canvas");
-    this.ui  = new UI();
+    this.ui  = new UI(this);
 
     this.state = {
-      day:               1,
-      funds:             50,
-      deterrence:        0,
-      crewHealth:        100,
-      shipCondition:     100,
-      cargo:             80,
-      maxCargo:          100,
-      fuel:              80,
-      distanceTraveled:  0,
-      totalRouteDistance: 1000,
-      speedPerTick:      25,
-      destinationName:   this.map.ports[this.map.ports.length - 1].name,
-      gameOver:          false,
+      day: 1,
+      currentPort: 11,
+      traveling: false,
+      travelFrom: null,
+      travelTo: null,
+      travelElapsed: 0,
+      travelDaysRemaining: 0,
+      cargo: {},
+      maxCargo: 100,
+      gameOver: false,
     };
 
-    this._sailing = false;
+    this.score = { fulfilled: 0, failed: 0, onTime: 0, late: 0, tonnageDelivered: 0, totalRequests: 0 };
+    this.requests = [];
+    this._nextId = 1;
+    this._nextRequestDay = 0;
     this._tickTimer = null;
-    this._busy = false;
-    this._visitedPorts = new Set([0]);
-    this._eventCooldown = 0;
-    this._lastTickDistance = 0;
-    this._dangerLevel = 0;
 
-    this._bindControls();
+    this._generateRequest();
+    this._generateRequest();
+    this._generateRequest();
+    this._nextRequestDay = this.state.day + 8;
+
     this._render();
-    this.ui.addLog(1, `Departing ${this.map.ports[0].name}. ${this.state.cargo} tons of mission cargo loaded. First Island Chain — hold the line.`, "port");
+    this.ui.renderSidebar();
+    this.ui.addLog(1, `Docked at ${this.map.ports[this.state.currentPort].name}. Three supply requests are active.`, "port");
   }
 
-  _bindControls() {
-    document.getElementById("btn-sail").addEventListener("click", () => {
-      if (this._busy) return;
-      if (this._sailing) this._stopSailing();
-      else this._startSailing();
-    });
+  getCargoTotal() {
+    return Object.values(this.state.cargo).reduce((a, b) => a + b, 0);
   }
 
-  _startSailing() {
-    if (this._sailing || this.state.gameOver) return;
-    this._sailing = true;
-    const btn = document.getElementById("btn-sail");
-    btn.textContent = "All Stop";
-    btn.dataset.running = "true";
-    this._scheduleNextTick();
+  getRequestPorts() {
+    const s = new Set();
+    for (const r of this.requests) { if (r.status === "active") s.add(r.destination); }
+    return s;
   }
 
-  _stopSailing() {
-    this._sailing = false;
-    clearTimeout(this._tickTimer);
-    this._tickTimer = null;
-    const btn = document.getElementById("btn-sail");
-    btn.textContent = "Ahead Full";
-    btn.dataset.running = "false";
+  getRequestsAtPort(portIndex) {
+    return this.requests.filter(r => r.status === "active" && r.destination === portIndex);
   }
 
-  _scheduleNextTick() {
-    if (!this._sailing || this.state.gameOver) return;
-    this._tickTimer = setTimeout(() => this._doTick(), 800);
+  // --- Travel ---
+
+  startTravel(targetPort) {
+    const days = this.map.getTravelTime(this.state.currentPort, targetPort);
+    if (days === null || this.state.traveling || this.state.gameOver) return;
+    const s = this.state;
+    s.traveling = true;
+    s.travelFrom = s.currentPort;
+    s.travelTo = targetPort;
+    s.travelElapsed = 0;
+    s.travelDaysRemaining = days;
+    s.currentPort = null;
+    this.ui.addLog(s.day, `Underway to ${this.map.ports[targetPort].name}. ETA: ${days} day${days > 1 ? "s" : ""}.`, "port");
+    this._render();
+    this.ui.renderSidebar();
+    this._scheduleTick();
+  }
+
+  _scheduleTick() {
+    if (!this.state.traveling || this.state.gameOver) return;
+    this._tickTimer = setTimeout(() => this._doTick(), 900);
   }
 
   async _doTick() {
-    if (this.state.gameOver || this._busy) return;
-    this._busy = true;
-
     const s = this.state;
     s.day++;
-
-    if (s.fuel > 0) {
-      s.fuel = Math.max(0, s.fuel - 2);
-      this._lastTickDistance = s.speedPerTick;
-    } else {
-      this._lastTickDistance = Math.floor(s.speedPerTick * 0.3);
-      s.crewHealth = Math.max(0, s.crewHealth - 5);
-      this.ui.addLog(s.day, "Fuel exhausted. Drifting on current. Crew readiness declining.", "bad");
-    }
-
-    s.distanceTraveled += this._lastTickDistance;
-
-    if (s.shipCondition > 0 && s.shipCondition < 20) {
-      s.crewHealth = Math.max(0, s.crewHealth - 2);
-      this.ui.addLog(s.day, "Hull critically damaged — taking on water.", "bad");
-    }
+    s.travelElapsed++;
+    s.travelDaysRemaining = Math.max(0, s.travelDaysRemaining - 1);
 
     this._checkDeadlines();
+    this._maybeGenerateRequest();
     this._render();
+    this.ui.renderSidebar();
 
-    // Port arrival
-    const portIndex = this._getReachedPort();
-    if (portIndex !== -1) {
-      this._visitedPorts.add(portIndex);
-      const port = this.map.ports[portIndex];
-
-      if (port.state === "fallen") {
-        this.ui.addLog(s.day, `Passing ${port.name} — fallen to enemy forces. Too dangerous to dock.`, "bad");
-        this._render();
-        this._busy = false;
-        if (this._sailing) this._scheduleNextTick();
-        return;
-      }
-
-      this._stopSailing();
-      this.ui.addLog(s.day, `Arrived at ${port.name}.`, "port");
-      this._render();
-
-      if (portIndex === this.map.ports.length - 1) {
-        if (port.mission && s.cargo >= 1) {
-          await this.ui.showPort(port, s);
-          this._render();
-        }
-        s.gameOver = true;
-        this.ui.showGameOver(true, s, this.map.ports);
-        this._busy = false;
-        return;
-      }
-
-      await this.ui.showPort(port, s);
-      this._render();
-      this._busy = false;
-      this._startSailing();
-      return;
-    }
-
-    // Random event
-    if (this._eventCooldown <= 0 && shouldEventTrigger(this._dangerLevel)) {
-      this._eventCooldown = 2;
-      this._stopSailing();
+    if (shouldEventTrigger()) {
       const event = getRandomEvent();
-      const result = await this.ui.showEvent(event, s);
-      this.ui.addLog(s.day, result.message, result.type);
+      const message = await this.ui.showEvent(event, s);
+      this.ui.addLog(s.day, message, "neutral");
       this._render();
-      this._busy = false;
-      this._startSailing();
+      this.ui.renderSidebar();
+    }
+
+    if (s.travelDaysRemaining <= 0) {
+      s.traveling = false;
+      s.currentPort = s.travelTo;
+      s.travelFrom = null;
+      s.travelTo = null;
+      this.ui.addLog(s.day, `Arrived at ${this.map.ports[s.currentPort].name}.`, "port");
+      this._render();
+      this.ui.renderSidebar();
       return;
     }
-    if (this._eventCooldown > 0) this._eventCooldown--;
 
-    // Game over checks
-    if (s.crewHealth <= 0) {
-      s.gameOver = true;
-      this._stopSailing();
-      this.ui.addLog(s.day, "All hands lost. Mission failed.", "bad");
-      this.ui.showGameOver(false, s, this.map.ports);
-    } else if (s.shipCondition <= 0) {
-      s.gameOver = true;
-      this._stopSailing();
-      this.ui.addLog(s.day, "Hull breach — the ship is going down.", "bad");
-      this.ui.showGameOver(false, s, this.map.ports);
+    if (s.day >= 60) {
+      this._endGame();
+      return;
     }
 
-    this._render();
-    this._busy = false;
+    this._scheduleTick();
+  }
 
-    if (this._sailing && !s.gameOver) {
-      this._scheduleNextTick();
+  // --- Cargo ---
+
+  loadCargo(type, amount) {
+    const port = this.map.ports[this.state.currentPort];
+    if (!port || port.type !== "base") return;
+    const baseHas = port.inventory[type] || 0;
+    const space = this.state.maxCargo - this.getCargoTotal();
+    const actual = Math.min(amount, baseHas, space);
+    if (actual <= 0) return;
+    port.inventory[type] -= actual;
+    this.state.cargo[type] = (this.state.cargo[type] || 0) + actual;
+    this._render();
+    this.ui.renderSidebar();
+  }
+
+  unloadAll() {
+    const port = this.map.ports[this.state.currentPort];
+    if (!port || port.type !== "base") return;
+    for (const [type, amt] of Object.entries(this.state.cargo)) {
+      port.inventory[type] = (port.inventory[type] || 0) + amt;
+    }
+    this.state.cargo = {};
+    this._render();
+    this.ui.renderSidebar();
+  }
+
+  quickLoad(requestId) {
+    const req = this.requests.find(r => r.id === requestId);
+    if (!req || req.status !== "active") return;
+    for (const [type, needed] of Object.entries(req.remaining)) {
+      const have = this.state.cargo[type] || 0;
+      const stillNeed = needed - have;
+      if (stillNeed > 0) this.loadCargo(type, stillNeed);
+    }
+  }
+
+  // --- Delivery ---
+
+  deliverCargo(requestId) {
+    const req = this.requests.find(r => r.id === requestId);
+    if (!req || req.status !== "active" || req.destination !== this.state.currentPort) return;
+    let delivered = 0;
+    for (const type of Object.keys(req.remaining)) {
+      const have = this.state.cargo[type] || 0;
+      if (have > 0) {
+        const amt = Math.min(have, req.remaining[type]);
+        this.state.cargo[type] -= amt;
+        if (this.state.cargo[type] <= 0) delete this.state.cargo[type];
+        req.remaining[type] -= amt;
+        if (req.remaining[type] <= 0) delete req.remaining[type];
+        delivered += amt;
+      }
+    }
+    this.score.tonnageDelivered += delivered;
+
+    if (Object.keys(req.remaining).length === 0) {
+      req.status = "fulfilled";
+      req.fulfilledDay = this.state.day;
+      this.score.fulfilled++;
+      if (this.state.day <= req.deadline) this.score.onTime++; else this.score.late++;
+      this.ui.addLog(this.state.day, `Request FULFILLED: ${req.mission}`, "good");
+    } else if (delivered > 0) {
+      this.ui.addLog(this.state.day, `Partial delivery: ${delivered}t to ${req.destinationName}. More supplies needed.`, "neutral");
+    }
+    this._render();
+    this.ui.renderSidebar();
+  }
+
+  // --- Requests ---
+
+  _generateRequest() {
+    const sites = this.map.ports.map((p, i) => ({ p, i })).filter(x => x.p.type === "site");
+    const taken = new Set(this.requests.filter(r => r.status === "active").map(r => r.destination));
+    const avail = sites.filter(s => !taken.has(s.i));
+    if (avail.length === 0) return;
+
+    const site = avail[Math.floor(Math.random() * avail.length)];
+    const tmpl = REQUEST_TEMPLATES[Math.floor(Math.random() * REQUEST_TEMPLATES.length)];
+    const urgency = tmpl.urgencyPool[Math.floor(Math.random() * tmpl.urgencyPool.length)];
+    const range = { high: [12, 18], medium: [18, 25], low: [25, 35] }[urgency];
+    const deadline = this.state.day + range[0] + Math.floor(Math.random() * (range[1] - range[0]));
+
+    this.requests.push({
+      id: this._nextId++,
+      destination: site.i,
+      destinationName: site.p.name,
+      supplies: { ...tmpl.supplies },
+      remaining: { ...tmpl.supplies },
+      deadline,
+      urgency,
+      mission: tmpl.mission,
+      status: "active",
+      createdDay: this.state.day,
+      fulfilledDay: null,
+    });
+    this.score.totalRequests++;
+    if (this.state.day > 1) {
+      this.ui.addLog(this.state.day, `New request: ${tmpl.mission} → ${site.p.name} [${urgency.toUpperCase()}]`, "port");
+    }
+  }
+
+  _maybeGenerateRequest() {
+    const active = this.requests.filter(r => r.status === "active").length;
+    if (this.state.day >= this._nextRequestDay && active < 5) {
+      this._generateRequest();
+      this._nextRequestDay = this.state.day + 7 + Math.floor(Math.random() * 4);
     }
   }
 
   _checkDeadlines() {
-    for (const port of this.map.ports) {
-      if (port.state === "contested" && port.mission &&
-          this.state.day > port.mission.deadline &&
-          port.mission.delivered < port.mission.cargoRequired) {
-        port.state = "fallen";
-        this._dangerLevel += 0.10;
-        this.ui.addLog(this.state.day, `${port.name} has FALLEN. ${port.mission.name} failed. Enemy interdiction range expanding.`, "bad");
+    for (const req of this.requests) {
+      if (req.status === "active" && this.state.day > req.deadline) {
+        req.status = "expired";
+        this.score.failed++;
+        this.ui.addLog(this.state.day, `Request EXPIRED: ${req.mission} → ${req.destinationName}`, "bad");
       }
     }
   }
 
-  _getReachedPort() {
-    const s = this.state;
-    const progress = s.distanceTraveled / s.totalRouteDistance;
-    const prevProgress = (s.distanceTraveled - this._lastTickDistance) / s.totalRouteDistance;
-
-    let cumulative = 0;
-    for (let i = 1; i < this.map.ports.length; i++) {
-      const segLen = Math.hypot(
-        this.map.ports[i].nx - this.map.ports[i - 1].nx,
-        this.map.ports[i].ny - this.map.ports[i - 1].ny,
-      );
-      cumulative += segLen;
-      const portProgress = cumulative / this.map.totalDistance;
-
-      if (!this._visitedPorts.has(i) && prevProgress < portProgress && progress >= portProgress) {
-        return i;
-      }
+  _endGame() {
+    this.state.gameOver = true;
+    clearTimeout(this._tickTimer);
+    for (const req of this.requests) {
+      if (req.status === "active") { req.status = "expired"; this.score.failed++; }
     }
-    return -1;
+    this.ui.showGameOver(this.score);
   }
 
   _render() {
-    const progress = this.state.distanceTraveled / this.state.totalRouteDistance;
-    this.map.render(progress);
-    this.ui.updateResources(this.state);
+    this.map.render(this.state, this.getRequestPorts());
+    document.getElementById("day-counter").textContent = `Day ${this.state.day}`;
+    document.getElementById("score-display").textContent = `Delivered: ${this.score.fulfilled}/${this.score.totalRequests}`;
   }
 }
 
