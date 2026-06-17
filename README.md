@@ -43,6 +43,14 @@ The "random events" reflect the geopolitical reality of the South China Sea.
 * **Scoring via "Force Projection":** Instead of just gold or points, the player earns "Force Projection" or "Deterrence Points." Successfully setting up a missile battery on an island increases the allied threat radius, making future voyages in that sector safer.
 * **The Domino Effect:** If an island falls because the Seabees didn't arrive in time, the enemy's radar and interdiction range expands, permanently altering the map and making the route to Taiwan vastly more dangerous.
 
+## 5. Game Architecture & Data Models
+
+The game utilizes a structured, data-driven architecture to manage the complexity of military logistics and dynamic events:
+
+* **Cargo Systems (`data_master/cargo.json` & `cargo_schema.txt`):** A comprehensive catalog of modular engineering capabilities, categorized into Heavy Equipment, Modular Structures, Construction Materials, and Heavy Lift items (e.g., Bulldozers, ROWPUs, Cranes). Each item includes specific weight and dimension constraints.
+* **Vessel Data:** Dedicated ship models dictate the capacity, speed, and defense capabilities of the transport vessels.
+* **Data-Driven Events (`events-data.js`):** Geopolitical hazards and interdictions are processed through a modular event engine, allowing for branching choices, skill checks, and direct impact on ship condition, crew morale, and Force Projection scores.
+
 ---
 
 davidsmith-prometheusit.com
