@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sea Trail</title>
+  <title>Sea Trail — First Island Chain</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
     <header id="header">
       <h1>Sea Trail</h1>
       <div id="controls">
-        <button id="btn-sail" data-running="false">Set Sail</button>
+        <button id="btn-sail" data-running="false">Ahead Full</button>
         <span id="day-counter">Day 1</span>
       </div>
     </header>
@@ -25,15 +25,16 @@
       <aside id="sidebar">
         <h2>Ship Status</h2>
         <ul id="resources">
-          <li>Money: $<span id="res-money">50</span></li>
+          <li>Deterrence: <span id="res-deterrence">0</span></li>
+          <li>Funds: $<span id="res-funds">50</span></li>
           <li>Crew Health: <span id="res-health">100</span>%</li>
-          <li>Ship: <span id="res-ship">100</span>%</li>
-          <li>Cargo: <span id="res-cargo">60</span> / <span id="res-cargo-max">100</span>t</li>
+          <li>Hull: <span id="res-ship">100</span>%</li>
+          <li>Cargo: <span id="res-cargo">80</span> / <span id="res-cargo-max">100</span>t</li>
           <li>Fuel: <span id="res-fuel">80</span></li>
-          <li>Distance Left: <span id="res-distance">0</span> mi</li>
+          <li>Distance: <span id="res-distance">0</span> nm</li>
         </ul>
         <div id="log">
-          <h3>Captain's Log</h3>
+          <h3>Ops Log</h3>
           <ul id="log-entries"></ul>
         </div>
       </aside>

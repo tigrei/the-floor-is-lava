@@ -5,10 +5,11 @@ class Game {
 
     this.state = {
       day:               1,
-      money:             50,
+      funds:             50,
+      deterrence:        0,
       crewHealth:        100,
       shipCondition:     100,
-      cargo:             60,
+      cargo:             80,
       maxCargo:          100,
       fuel:              80,
       distanceTraveled:  0,
@@ -24,10 +25,11 @@ class Game {
     this._visitedPorts = new Set([0]);
     this._eventCooldown = 0;
     this._lastTickDistance = 0;
+    this._dangerLevel = 0;
 
     this._bindControls();
     this._render();
-    this.ui.addLog(1, `Set sail from ${this.map.ports[0].name} with ${this.state.cargo} tons of cargo!`, "port");
+    this.ui.addLog(1, `Departing ${this.map.ports[0].name}. ${this.state.cargo} tons of mission cargo loaded. First Island Chain — hold the line.`, "port");
   }
 
   _bindControls() {
@@ -42,7 +44,7 @@ class Game {
     if (this._sailing || this.state.gameOver) return;
     this._sailing = true;
     const btn = document.getElementById("btn-sail");
-    btn.textContent = "Pause";
+    btn.textContent = "All Stop";
     btn.dataset.running = "true";
     this._scheduleNextTick();
   }
@@ -52,7 +54,7 @@ class Game {
     clearTimeout(this._tickTimer);
     this._tickTimer = null;
     const btn = document.getElementById("btn-sail");
-    btn.textContent = "Set Sail";
+    btn.textContent = "Ahead Full";
     btn.dataset.running = "false";
   }
 
@@ -74,34 +76,49 @@ class Game {
     } else {
       this._lastTickDistance = Math.floor(s.speedPerTick * 0.3);
       s.crewHealth = Math.max(0, s.crewHealth - 5);
-      this.ui.addLog(s.day, "Out of fuel! Drifting. Crew losing hope.", "bad");
+      this.ui.addLog(s.day, "Fuel exhausted. Drifting on current. Crew readiness declining.", "bad");
     }
 
     s.distanceTraveled += this._lastTickDistance;
 
     if (s.shipCondition > 0 && s.shipCondition < 20) {
       s.crewHealth = Math.max(0, s.crewHealth - 2);
-      this.ui.addLog(s.day, "Ship badly damaged — taking on water.", "bad");
+      this.ui.addLog(s.day, "Hull critically damaged — taking on water.", "bad");
     }
 
+    this._checkDeadlines();
     this._render();
 
     // Port arrival
     const portIndex = this._getReachedPort();
     if (portIndex !== -1) {
       this._visitedPorts.add(portIndex);
+      const port = this.map.ports[portIndex];
+
+      if (port.state === "fallen") {
+        this.ui.addLog(s.day, `Passing ${port.name} — fallen to enemy forces. Too dangerous to dock.`, "bad");
+        this._render();
+        this._busy = false;
+        if (this._sailing) this._scheduleNextTick();
+        return;
+      }
+
       this._stopSailing();
-      this.ui.addLog(s.day, `Arrived at ${this.map.ports[portIndex].name}!`, "port");
+      this.ui.addLog(s.day, `Arrived at ${port.name}.`, "port");
       this._render();
 
       if (portIndex === this.map.ports.length - 1) {
+        if (port.mission && s.cargo >= 1) {
+          await this.ui.showPort(port, s);
+          this._render();
+        }
         s.gameOver = true;
-        this.ui.showGameOver(true, s);
+        this.ui.showGameOver(true, s, this.map.ports);
         this._busy = false;
         return;
       }
 
-      await this.ui.showPort(this.map.ports[portIndex].name, s);
+      await this.ui.showPort(port, s);
       this._render();
       this._busy = false;
       this._startSailing();
@@ -109,7 +126,7 @@ class Game {
     }
 
     // Random event
-    if (this._eventCooldown <= 0 && shouldEventTrigger()) {
+    if (this._eventCooldown <= 0 && shouldEventTrigger(this._dangerLevel)) {
       this._eventCooldown = 2;
       this._stopSailing();
       const event = getRandomEvent();
@@ -126,13 +143,13 @@ class Game {
     if (s.crewHealth <= 0) {
       s.gameOver = true;
       this._stopSailing();
-      this.ui.addLog(s.day, "The crew has perished.", "bad");
-      this.ui.showGameOver(false, s);
+      this.ui.addLog(s.day, "All hands lost. Mission failed.", "bad");
+      this.ui.showGameOver(false, s, this.map.ports);
     } else if (s.shipCondition <= 0) {
       s.gameOver = true;
       this._stopSailing();
-      this.ui.addLog(s.day, "The ship sank beneath the waves.", "bad");
-      this.ui.showGameOver(false, s);
+      this.ui.addLog(s.day, "Hull breach — the ship is going down.", "bad");
+      this.ui.showGameOver(false, s, this.map.ports);
     }
 
     this._render();
@@ -140,6 +157,18 @@ class Game {
 
     if (this._sailing && !s.gameOver) {
       this._scheduleNextTick();
+    }
+  }
+
+  _checkDeadlines() {
+    for (const port of this.map.ports) {
+      if (port.state === "contested" && port.mission &&
+          this.state.day > port.mission.deadline &&
+          port.mission.delivered < port.mission.cargoRequired) {
+        port.state = "fallen";
+        this._dangerLevel += 0.10;
+        this.ui.addLog(this.state.day, `${port.name} has FALLEN. ${port.mission.name} failed. Enemy interdiction range expanding.`, "bad");
+      }
     }
   }
 
