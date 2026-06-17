@@ -3,6 +3,16 @@ class GameMap {
     this.canvas = document.getElementById(canvasId);
     this.ctx    = this.canvas.getContext("2d");
 
+    this.bgImage = new Image();
+    this.bgImage.src = "assets/google_earth.png";
+    this.bgLoaded = false;
+    this.bgImage.onload = () => {
+      this.bgLoaded = true;
+      this.render(this.currentProgress || 0);
+    };
+
+    // Port definitions: { name, x, y } in normalized 0–1 space
+    // (mapped to actual canvas size during render)
     this.ports = [
       { name: "Yokosuka",     nx: 0.82, ny: 0.08, type: "base",
         inventory: { power: 40, comms: 35, shelter: 25, tools: 20, construction: 15, bridging: 10, water: 5, heavy: 5 } },
