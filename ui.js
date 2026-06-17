@@ -2,13 +2,13 @@ class UI {
   constructor(game) {
     this.game = game;
     this.els = {
-      shipStatus:   document.getElementById("ship-status"),
+      shipStatus: document.getElementById("ship-status"),
       actionsPanel: document.getElementById("actions-panel"),
       requestsPanel: document.getElementById("requests-panel"),
-      logEntries:   document.getElementById("log-entries"),
-      overlay:      document.getElementById("modal-overlay"),
-      modalTitle:   document.getElementById("modal-title"),
-      modalBody:    document.getElementById("modal-body"),
+      logEntries: document.getElementById("log-entries"),
+      overlay: document.getElementById("modal-overlay"),
+      modalTitle: document.getElementById("modal-title"),
+      modalBody: document.getElementById("modal-body"),
       modalChoices: document.getElementById("modal-choices"),
     };
   }
@@ -83,7 +83,7 @@ class UI {
           `<span class="load-name">${SUPPLY_TYPES[type].short}</span>` +
           `<span class="load-stock">${stock}t</span>` +
           `<span class="load-ship">${shipHas}t</span>` +
-          `<button class="btn-sm" onclick="game.loadCargo('${type}',10)">+10</button>` +
+          `<button class="btn-sm" onclick="game.loadCargo('${type}',5)">+5</button>` +
           `<button class="btn-sm" onclick="game.loadCargo('${type}',999)">All</button>` +
           `</div>`;
       }
@@ -107,7 +107,7 @@ class UI {
       const target = this.game.map.ports[idx];
       const hasReq = this.game.getRequestsAtPort(idx).length > 0;
       const badge = target.type === "base" ? '<span class="nav-badge base">BASE</span>' :
-                    (hasReq ? '<span class="nav-badge request">REQ</span>' : "");
+        (hasReq ? '<span class="nav-badge request">REQ</span>' : "");
       html += `<button class="btn-nav" onclick="game.startTravel(${idx})">` +
         `<span>${target.name} ${badge}</span><span class="nav-days">${days}d</span></button>`;
     }
@@ -150,7 +150,7 @@ class UI {
   showEvent(event, state) {
     return new Promise((resolve) => {
       this.els.modalTitle.textContent = event.name;
-      this.els.modalBody.textContent  = event.description;
+      this.els.modalBody.textContent = event.description;
       this.els.modalChoices.innerHTML = "";
 
       event.choices.forEach((choice) => {
