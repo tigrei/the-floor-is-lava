@@ -1,0 +1,38 @@
+CARGO DICTIONARY SCHEMA
+=======================
+
+cargo_id
+  Type:        String
+  Description: Unique identifier for each cargo entry
+  Example:     "CARGO-001"
+
+general_label
+  Type:        String (enumerated)
+  Description: High-level category classifying the type of cargo
+  Example:     "Heavy Equipment"
+  Allowed values:
+               - Heavy Equipment
+               - Heavy Lift
+               - Construction Material
+               - Modular Structure
+               - Vehicle
+
+cargo
+  Type:        String
+  Description: Full descriptive name of the cargo item including make, model, or specification
+  Example:     "Caterpillar D9 Bulldozers"
+
+dimensions.length_ft
+  Type:        Float
+  Description: Overall length of the cargo item measured in feet
+  Example:     17.5
+
+dimensions.width_ft
+  Type:        Float
+  Description: Overall width of the cargo item measured in feet
+  Example:     14.0
+
+dimensions.weight_lbs
+  Type:        Integer
+  Description: Total weight of the cargo item measured in pounds
+  Example:     114000
