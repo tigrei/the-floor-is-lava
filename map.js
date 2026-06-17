@@ -3,6 +3,16 @@ class GameMap {
     this.canvas = document.getElementById(canvasId);
     this.ctx    = this.canvas.getContext("2d");
 
+    this.bgImage = new Image();
+    this.bgImage.src = "assets/southeast_asia_location_map.png";
+    this.bgLoaded = false;
+    this.bgImage.onload = () => {
+      this.bgLoaded = true;
+      this.render(this.currentProgress || 0);
+    };
+
+    // Port definitions: { name, x, y } in normalized 0–1 space
+    // (mapped to actual canvas size during render)
     this.ports = [
       { name: "Guam",           nx: 0.88, ny: 0.48, state: "secure" },
       { name: "Palau",          nx: 0.73, ny: 0.72, state: "secure" },
@@ -91,12 +101,18 @@ class GameMap {
   }
 
   render(progress) {
+    this.currentProgress = progress;
     const { ctx, canvas } = this;
     const W = canvas.width;
     const H = canvas.height;
 
-    ctx.fillStyle = "#0a1929";
-    ctx.fillRect(0, 0, W, H);
+    // --- Ocean background ---
+    if (this.bgLoaded) {
+      ctx.drawImage(this.bgImage, 0, 0, W, H);
+    } else {
+      ctx.fillStyle = "#0a1929"; // fallback while image loads
+      ctx.fillRect(0, 0, W, H);
+    }
     this._drawWaves();
 
     // Route line (dashed)
