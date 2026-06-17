@@ -1,0 +1,124 @@
+{
+  "ships": [
+    {
+      "ship_id": "CVN-68",
+      "name": "USS Nimitz",
+      "cargo_capacity_tons": 15000,
+      "weight_tons": 100000,
+      "max_speed_knots": 30,
+      "fuel_capacity_tons": 9000,
+      "size": {
+        "x": 333,
+        "y": 41
+      }
+    },
+    {
+      "ship_id": "CVN-78",
+      "name": "USS Gerald R. Ford",
+      "cargo_capacity_tons": 16000,
+      "weight_tons": 100000,
+      "max_speed_knots": 30,
+      "fuel_capacity_tons": 8900,
+      "size": {
+        "x": 337,
+        "y": 78
+      }
+    },
+    {
+      "ship_id": "DDG-51",
+      "name": "USS Arleigh Burke",
+      "cargo_capacity_tons": 1200,
+      "weight_tons": 9200,
+      "max_speed_knots": 31,
+      "fuel_capacity_tons": 1300,
+      "size": {
+        "x": 155,
+        "y": 20
+      }
+    },
+    {
+      "ship_id": "CG-52",
+      "name": "USS Bunker Hill",
+      "cargo_capacity_tons": 1500,
+      "weight_tons": 9800,
+      "max_speed_knots": 32,
+      "fuel_capacity_tons": 1600,
+      "size": {
+        "x": 173,
+        "y": 16
+      }
+    },
+    {
+      "ship_id": "LHD-1",
+      "name": "USS Wasp",
+      "cargo_capacity_tons": 3500,
+      "weight_tons": 41000,
+      "max_speed_knots": 22,
+      "fuel_capacity_tons": 6000,
+      "size": {
+        "x": 257,
+        "y": 32
+      }
+    },
+    {
+      "ship_id": "LHA-6",
+      "name": "USS America",
+      "cargo_capacity_tons": 3000,
+      "weight_tons": 45000,
+      "max_speed_knots": 22,
+      "fuel_capacity_tons": 6500,
+      "size": {
+        "x": 257,
+        "y": 32
+      }
+    },
+    {
+      "ship_id": "LPD-17",
+      "name": "USS San Antonio",
+      "cargo_capacity_tons": 1800,
+      "weight_tons": 25000,
+      "max_speed_knots": 22,
+      "fuel_capacity_tons": 3000,
+      "size": {
+        "x": 208,
+        "y": 32
+      }
+    },
+    {
+      "ship_id": "FFG-62",
+      "name": "USS Constellation",
+      "cargo_capacity_tons": 900,
+      "weight_tons": 7200,
+      "max_speed_knots": 26,
+      "fuel_capacity_tons": 1200,
+      "size": {
+        "x": 151,
+        "y": 20
+      }
+    },
+    {
+      "ship_id": "AOE-6",
+      "name": "USNS Supply",
+      "cargo_capacity_tons": 17700,
+      "weight_tons": 49000,
+      "max_speed_knots": 25,
+      "fuel_capacity_tons": 26000,
+      "size": {
+        "x": 229,
+        "y": 32
+      }
+    },
+    {
+      "ship_id": "T-AKE-1",
+      "name": "USNS Lewis and Clark",
+      "cargo_capacity_tons": 6700,
+      "weight_tons": 37000,
+      "max_speed_knots": 20,
+      "fuel_capacity_tons": 14000,
+      "size": {
+        "x": 210,
+        "y": 32
+      }
+    }
+  ]
+}
