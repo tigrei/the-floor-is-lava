@@ -53,4 +53,3 @@ The game utilizes a structured, data-driven architecture to manage the complexit
 
 ---
 
-davidsmith-prometheusit.com
