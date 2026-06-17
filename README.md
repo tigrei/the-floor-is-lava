@@ -45,5 +45,3 @@ The "random events" reflect the geopolitical reality of the South China Sea.
 
 ---
 
-davidsmith-prometheusit.com
-davidsmith-prometheusit
