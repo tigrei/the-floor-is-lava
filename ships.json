@@ -1,0 +1,76 @@
+{
+  "ships": [
+    {
+      "ship_id": "CVN-68",
+      "name": "USS Nimitz",
+      "cargo_capacity_tons": 0,
+      "size": {
+        "x": 333,
+        "y": 77
+      }
+    },
+    {
+      "ship_id": "CVN-78",
+      "name": "USS Gerald R. Ford",
+      "cargo_capacity_tons": 0,
+      "size": {
+        "x": 337,
+        "y": 78
+      }
+    },
+    {
+      "ship_id": "DDG-51",
+      "name": "USS Arleigh Burke",
+      "cargo_capacity_tons": 0,
+      "size": {
+        "x": 155,
+        "y": 20
+      }
+    },
+    {
+      "ship_id": "LHD-1",
+      "name": "USS Wasp",
+      "cargo_capacity_tons": 3000,
+      "size": {
+        "x": 257,
+        "y": 32
+      }
+    },
+    {
+      "ship_id": "LHA-6",
+      "name": "USS America",
+      "cargo_capacity_tons": 2500,
+      "size": {
+        "x": 257,
+        "y": 32
+      }
+    },
+    {
+      "ship_id": "LPD-17",
+      "name": "USS San Antonio",
+      "cargo_capacity_tons": 1800,
+      "size": {
+        "x": 208,
+        "y": 32
+      }
+    },
+    {
+      "ship_id": "AOE-6",
+      "name": "USNS Supply",
+      "cargo_capacity_tons": 17700,
+      "size": {
+        "x": 229,
+        "y": 32
+      }
+    },
+    {
+      "ship_id": "T-AKE-1",
+      "name": "USNS Lewis and Clark",
+      "cargo_capacity_tons": 6700,
+      "size": {
+        "x": 210,
+        "y": 32
+      }
+    }
+  ]
+}
