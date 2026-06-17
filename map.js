@@ -8,7 +8,9 @@ class GameMap {
     this.bgLoaded = false;
     this.bgImage.onload = () => {
       this.bgLoaded = true;
-      this.render(this.currentProgress || 0);
+      if (this.lastShipState && this.lastRequestPorts) {
+        this.render(this.lastShipState, this.lastRequestPorts);
+      }
     };
 
     // Port definitions: { name, x, y } in normalized 0–1 space
@@ -53,6 +55,9 @@ class GameMap {
     const rect = this.canvas.parentElement.getBoundingClientRect();
     this.canvas.width  = rect.width;
     this.canvas.height = rect.height;
+    if (this.lastShipState && this.lastRequestPorts) {
+      this.render(this.lastShipState, this.lastRequestPorts);
+    }
   }
 
   _toPixel(nx, ny) {
@@ -80,10 +85,19 @@ class GameMap {
   }
 
   render(shipState, requestPorts) {
+    this.lastShipState = shipState;
+    this.lastRequestPorts = requestPorts;
+
     const { ctx, canvas } = this;
-    ctx.fillStyle = "#0a1929";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    this._drawWaves();
+    if (this.bgLoaded) {
+      ctx.drawImage(this.bgImage, 0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "rgba(10, 22, 40, 0.75)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.fillStyle = "#0a1929";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      this._drawWaves();
+    }
 
     for (const [a, b] of this.connections) {
       const pa = this._toPixel(this.ports[a].nx, this.ports[a].ny);
