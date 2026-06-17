@@ -1,6 +1,6 @@
 # First Island Chain: Gray Zone Operations
 
-A browser-based JavaScript wargaming scenario game inspired by Oregon Trail, set in the high-tension "Gray Zone" of the Philippine Sea, South China Sea, and Taiwan Strait.
+A browser-based JavaScript wargaming scenario game, set in the high-tension "Gray Zone" of the Philippine Sea, South China Sea, and Taiwan Strait.
 
 ## 1. The World State: The First Island Chain
 
