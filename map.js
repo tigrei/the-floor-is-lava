@@ -4,7 +4,7 @@ class GameMap {
     this.ctx    = this.canvas.getContext("2d");
 
     this.bgImage = new Image();
-    this.bgImage.src = "assets/southeast_asia_location_map.png";
+    this.bgImage.src = "assets/google_earth.png";
     this.bgLoaded = false;
     this.bgImage.onload = () => {
       this.bgLoaded = true;
