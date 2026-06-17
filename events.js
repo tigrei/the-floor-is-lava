@@ -54,6 +54,6 @@ function getRandomEvent() {
   return EVENT_CATALOG[Math.floor(Math.random() * EVENT_CATALOG.length)];
 }
 
-function shouldEventTrigger() {
-  return Math.random() < 0.35;
+function shouldEventTrigger(dangerBonus) {
+  return Math.random() < (0.35 + (dangerBonus || 0));
 }

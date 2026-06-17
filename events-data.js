@@ -1,248 +1,284 @@
 const EVENT_DATA = [
 
   {
-    "name": "Storm!",
-    "description": "Dark clouds roll in and waves crash over the deck. The crew braces for impact.",
+    "name": "Maritime Militia",
+    "description": "A swarm of 'fishing vessels' with reinforced steel hulls aggressively blocks your path. No military colors, but their formation is tactical.",
     "type": "bad",
     "choices": [
       {
-        "text": "Ride it out",
+        "text": "Alter course",
         "outcomes": [
-          { "chance": 50, "preview": "Minor damage", "effects": [{ "resource": "shipCondition", "delta": -10 }], "message": "The storm passes with minor hull damage." },
-          { "chance": 30, "preview": "Cargo lost", "effects": [{ "resource": "shipCondition", "delta": -20 }, { "resource": "cargo", "delta": -10 }], "message": "Waves battered the hull and washed {cargo_change} tons of cargo overboard." },
-          { "chance": 20, "preview": "Devastating", "effects": [{ "resource": "shipCondition", "delta": -30 }, { "resource": "crewHealth", "delta": -15 }, { "resource": "cargo", "delta": -15 }], "message": "Catastrophic storm! Hull breached, crew injured, {cargo_change} tons lost." }
+          { "chance": 70, "preview": "Safe detour", "effects": [{ "resource": "fuel", "delta": -10 }], "message": "Burned extra fuel on a wide detour. The militia watched but didn't pursue." },
+          { "chance": 30, "preview": "Major detour", "effects": [{ "resource": "fuel", "delta": -15 }], "message": "Forced into a long detour. Significant fuel expended to avoid the swarm." }
         ]
       },
       {
-        "text": "Seek shelter",
+        "text": "Push through the swarm",
         "outcomes": [
-          { "chance": 70, "preview": "Safe, burns fuel", "effects": [{ "resource": "fuel", "delta": -8 }], "message": "Found shelter and waited out the storm. Burned extra fuel." },
-          { "chance": 30, "preview": "Rocky shoals", "effects": [{ "resource": "fuel", "delta": -8 }, { "resource": "shipCondition", "delta": -12 }], "message": "The cove had rocky shoals. Hull scraped and fuel burned." }
+          { "chance": 40, "preview": "They scatter", "effects": [], "message": "The militia vessels scatter as you hold course. No contact." },
+          { "chance": 35, "preview": "Hull scrapes", "effects": [{ "resource": "shipCondition", "delta": -15 }, { "resource": "cargo", "delta": -5 }], "message": "Hulls scraped in close quarters. Minor damage, {cargo_change} tons of deck cargo shifted overboard." },
+          { "chance": 25, "preview": "Collision", "effects": [{ "resource": "shipCondition", "delta": -25 }, { "resource": "crewHealth", "delta": -10 }, { "resource": "cargo", "delta": -10 }], "message": "Major collision with a militia vessel. Hull breached, crew injured, {cargo_change} tons lost." }
+        ]
+      },
+      {
+        "text": "Fire warning shots",
+        "outcomes": [
+          { "chance": 50, "preview": "They disperse", "effects": [], "message": "Warning shots fired. The militia disperses immediately." },
+          { "chance": 30, "preview": "Return fire", "effects": [{ "resource": "crewHealth", "delta": -15 }, { "resource": "shipCondition", "delta": -10 }], "message": "They returned fire! Small arms damage to the superstructure. Crew casualties." },
+          { "chance": 20, "preview": "International incident", "effects": [{ "resource": "crewHealth", "delta": -10 }, { "resource": "funds", "delta": -20 }, { "resource": "fuel", "delta": -5 }], "message": "International incident. Command orders you to divert for debrief. Lost time, funds, and fuel." }
         ]
       }
     ]
   },
 
   {
-    "name": "Pirates!",
-    "description": "A black-flagged vessel approaches fast off the starboard bow.",
+    "name": "Typhoon Warning",
+    "description": "A Category 4 typhoon is forming in the Philippine Sea. Winds picking up, barometer dropping fast. You're directly in its path.",
     "type": "bad",
     "choices": [
       {
-        "text": "Fight them off",
+        "text": "Sail through — maintain schedule",
         "outcomes": [
-          { "chance": 40, "preview": "Victory, minor losses", "effects": [{ "resource": "crewHealth", "delta": -5 }, { "resource": "money", "delta": 30 }], "message": "Victory! Minor casualties. Seized $30 from the pirates." },
-          { "chance": 35, "preview": "Costly victory", "effects": [{ "resource": "crewHealth", "delta": -15 }, { "resource": "shipCondition", "delta": -15 }, { "resource": "money", "delta": 10 }], "message": "Hard-fought victory. Crew wounded, hull damaged. Seized $10." },
-          { "chance": 25, "preview": "Overwhelmed", "effects": [{ "resource": "crewHealth", "delta": -20 }, { "resource": "shipCondition", "delta": -20 }, { "resource": "cargo", "delta": -15 }], "message": "Overwhelmed! Heavy losses. Pirates plundered {cargo_change} tons of cargo." }
+          { "chance": 25, "preview": "Made it through", "effects": [{ "resource": "shipCondition", "delta": -15 }, { "resource": "fuel", "delta": -5 }], "message": "Brutal passage, but you made it through. Hull battered, fuel spent fighting the storm." },
+          { "chance": 45, "preview": "Severe damage", "effects": [{ "resource": "shipCondition", "delta": -30 }, { "resource": "crewHealth", "delta": -10 }, { "resource": "cargo", "delta": -15 }], "message": "Massive waves. Hull cracked, crew thrown around. {cargo_change} tons of deck cargo washed away." },
+          { "chance": 30, "preview": "Catastrophic", "effects": [{ "resource": "shipCondition", "delta": -40 }, { "resource": "crewHealth", "delta": -20 }, { "resource": "cargo", "delta": -20 }], "message": "Near-capsizing. Catastrophic hull damage, multiple casualties, {cargo_change} tons of mission cargo lost to the sea." }
         ]
       },
       {
-        "text": "Surrender cargo",
+        "text": "Divert to safe harbor",
         "outcomes": [
-          { "chance": 60, "preview": "Lose some cargo", "effects": [{ "resource": "cargo", "delta": -15 }], "message": "Pirates took {cargo_change} tons of cargo and sailed away." },
-          { "chance": 40, "preview": "Greedy pirates", "effects": [{ "resource": "cargo", "delta": -20 }, { "resource": "money", "delta": -20 }], "message": "Greedy pirates took {cargo_change} tons of cargo and ${money_change}!" }
-        ]
-      },
-      {
-        "text": "Try to outrun",
-        "outcomes": [
-          { "chance": 45, "preview": "Escape, burn fuel", "effects": [{ "resource": "fuel", "delta": -10 }], "message": "Escaped! Burned extra fuel in the chase." },
-          { "chance": 30, "preview": "Narrow escape", "effects": [{ "resource": "fuel", "delta": -10 }, { "resource": "shipCondition", "delta": -10 }], "message": "Barely escaped! Sails torn and fuel spent." },
-          { "chance": 25, "preview": "Caught!", "effects": [{ "resource": "crewHealth", "delta": -10 }, { "resource": "cargo", "delta": -20 }, { "resource": "fuel", "delta": -5 }], "message": "Caught! Lost {cargo_change} tons of cargo after a brutal chase." }
+          { "chance": 80, "preview": "Safe but delayed", "effects": [{ "resource": "fuel", "delta": -12 }], "message": "Sheltered in a cove and rode it out. Lost time and fuel, but ship and crew are intact." },
+          { "chance": 20, "preview": "Rough approach", "effects": [{ "resource": "fuel", "delta": -12 }, { "resource": "shipCondition", "delta": -10 }], "message": "Harbor approach was rough. Minor hull damage on the breakwater, but safe now." }
         ]
       }
     ]
   },
 
   {
-    "name": "Sickness",
-    "description": "Fever spreads below deck. Sailors are falling ill one by one.",
+    "name": "Electronic Warfare",
+    "description": "GPS and AIS are spoofed. Navigation displays glitch — reported position jumps 50 miles off course. Enemy EW is active in this sector.",
     "type": "bad",
     "choices": [
       {
-        "text": "Buy medicine ($20)",
+        "text": "Dead reckoning — go manual",
         "outcomes": [
-          { "chance": 60, "preview": "Contained", "requires": { "money": 20 }, "effects": [{ "resource": "money", "delta": -20 }, { "resource": "crewHealth", "delta": -5 }], "message": "Medicine contained the outbreak. Minor crew losses.", "failEffects": [{ "resource": "crewHealth", "delta": -25 }], "failMessage": "Can't afford medicine! The fever ravages the crew." },
-          { "chance": 40, "preview": "Full recovery", "requires": { "money": 20 }, "effects": [{ "resource": "money", "delta": -20 }], "message": "The medicine worked perfectly. Full recovery!", "failEffects": [{ "resource": "crewHealth", "delta": -25 }], "failMessage": "Can't afford medicine! The fever ravages the crew." }
+          { "chance": 70, "preview": "Safe, burns fuel", "effects": [{ "resource": "fuel", "delta": -8 }], "message": "Switched to manual navigation. Slower and fuel-intensive, but you held course." },
+          { "chance": 30, "preview": "Minimal delay", "effects": [{ "resource": "fuel", "delta": -4 }], "message": "Navigator's celestial fix was spot-on. Minimal fuel wasted." }
         ]
       },
       {
-        "text": "Quarantine the sick",
+        "text": "Trust instruments",
         "outcomes": [
-          { "chance": 50, "preview": "Partial containment", "effects": [{ "resource": "crewHealth", "delta": -12 }], "message": "Quarantine helped, but many suffered." },
-          { "chance": 30, "preview": "Contained well", "effects": [{ "resource": "crewHealth", "delta": -5 }], "message": "Quick quarantine action prevented the worst." },
-          { "chance": 20, "preview": "Spreads anyway", "effects": [{ "resource": "crewHealth", "delta": -20 }], "message": "Quarantine failed. The sickness spread to most of the crew." }
+          { "chance": 40, "preview": "Spoofing clears", "effects": [], "message": "The jamming cleared after 20 minutes. No harm done." },
+          { "chance": 35, "preview": "Close call", "effects": [{ "resource": "shipCondition", "delta": -15 }], "message": "Navigated dangerously close to a shoal. Hull scraped the bottom." },
+          { "chance": 25, "preview": "Near minefield", "effects": [{ "resource": "shipCondition", "delta": -25 }, { "resource": "crewHealth", "delta": -10 }], "message": "Sailed near an enemy minefield. Close detonation rattled the hull and injured crew." }
         ]
       }
     ]
   },
 
   {
-    "name": "Reef Ahead!",
-    "description": "The lookout spots dangerous coral formations directly in your path.",
+    "name": "Submarine Contact",
+    "description": "Sonar reports submerged contact bearing 270, range closing. Possible enemy submarine. Battle stations!",
+    "type": "bad",
+    "choices": [
+      {
+        "text": "Evasive maneuvers",
+        "outcomes": [
+          { "chance": 60, "preview": "Lost the contact", "effects": [{ "resource": "fuel", "delta": -10 }, { "resource": "crewHealth", "delta": -5 }], "message": "Contact lost after aggressive maneuvering. Crew shaken but safe." },
+          { "chance": 40, "preview": "Persistent contact", "effects": [{ "resource": "fuel", "delta": -15 }, { "resource": "crewHealth", "delta": -10 }], "message": "Contact shadowed you for hours. Exhausting evasion burned fuel and frayed nerves." }
+        ]
+      },
+      {
+        "text": "Deploy countermeasures ($20)",
+        "outcomes": [
+          { "chance": 70, "preview": "Effective", "requires": { "funds": 20 }, "effects": [{ "resource": "funds", "delta": -20 }], "message": "Countermeasures deployed. Contact broke off. Expensive but effective.", "failEffects": [{ "resource": "crewHealth", "delta": -15 }], "failMessage": "No funds for countermeasures! Crew endures a nerve-wracking close pass." },
+          { "chance": 30, "preview": "Partial success", "requires": { "funds": 20 }, "effects": [{ "resource": "funds", "delta": -20 }, { "resource": "crewHealth", "delta": -5 }], "message": "Countermeasures partially effective. Contact circled twice before leaving.", "failEffects": [{ "resource": "crewHealth", "delta": -15 }], "failMessage": "No funds for countermeasures! Crew endures a nerve-wracking close pass." }
+        ]
+      },
+      {
+        "text": "Maintain course and speed",
+        "outcomes": [
+          { "chance": 50, "preview": "False alarm", "effects": [], "message": "Contact identified as a whale pod. False alarm — stand down." },
+          { "chance": 30, "preview": "Torpedo in the water!", "effects": [{ "resource": "crewHealth", "delta": -15 }, { "resource": "shipCondition", "delta": -10 }], "message": "Torpedo in the water! Emergency maneuver — near miss. Shockwave damaged hull." },
+          { "chance": 20, "preview": "Close hit", "effects": [{ "resource": "shipCondition", "delta": -20 }, { "resource": "cargo", "delta": -10 }, { "resource": "crewHealth", "delta": -10 }], "message": "Torpedo detonated close aboard. Hull breached, {cargo_change} tons of cargo flooded." }
+        ]
+      }
+    ]
+  },
+
+  {
+    "name": "Minefield",
+    "description": "Intelligence reports enemy sea mines deployed in this sector. Your mine countermeasures are limited.",
     "type": "bad",
     "choices": [
       {
         "text": "Navigate carefully",
         "outcomes": [
-          { "chance": 60, "preview": "Safe passage", "effects": [{ "resource": "fuel", "delta": -5 }], "message": "Careful navigation avoided the reef. Used extra fuel." },
-          { "chance": 40, "preview": "Scrape the hull", "effects": [{ "resource": "fuel", "delta": -5 }, { "resource": "shipCondition", "delta": -10 }], "message": "Minor scrape on the reef despite careful navigation." }
+          { "chance": 70, "preview": "Clear passage", "effects": [{ "resource": "fuel", "delta": -6 }], "message": "Careful navigation found a clear path. Extra fuel burned on slow transit." },
+          { "chance": 30, "preview": "Close detonation", "effects": [{ "resource": "fuel", "delta": -6 }, { "resource": "shipCondition", "delta": -15 }], "message": "Mine detonated nearby. Shockwave buckled hull plates. Damage but still afloat." }
         ]
       },
       {
-        "text": "Push straight through",
+        "text": "Find alternate route",
         "outcomes": [
-          { "chance": 30, "preview": "Lucky pass", "effects": [], "message": "Somehow threaded the needle! No damage." },
-          { "chance": 45, "preview": "Hull damage", "effects": [{ "resource": "shipCondition", "delta": -20 }], "message": "The reef tore into the hull. Significant damage." },
-          { "chance": 25, "preview": "Severe damage", "effects": [{ "resource": "shipCondition", "delta": -30 }, { "resource": "cargo", "delta": -10 }], "message": "Hull breached! {cargo_change} tons of cargo fell into the sea." }
+          { "chance": 80, "preview": "Safe detour", "effects": [{ "resource": "fuel", "delta": -12 }], "message": "Long detour around the field. Safe, but burned significant fuel." },
+          { "chance": 20, "preview": "Detour also mined", "effects": [{ "resource": "fuel", "delta": -10 }, { "resource": "shipCondition", "delta": -10 }], "message": "Alternate route had mines too. Minor hull damage before clearing the area." }
         ]
       }
     ]
   },
 
   {
-    "name": "Fire Below Deck!",
-    "description": "Smoke billows from the cargo hold. Fire is spreading fast!",
+    "name": "Cyber Attack",
+    "description": "Ship's combat and engineering systems under cyber attack. Damage control displays offline, engine controls locking up.",
     "type": "bad",
     "choices": [
       {
-        "text": "Fight the fire",
+        "text": "Isolate affected systems",
         "outcomes": [
-          { "chance": 50, "preview": "Extinguished", "effects": [{ "resource": "crewHealth", "delta": -5 }, { "resource": "cargo", "delta": -5 }], "message": "Fire extinguished! Minor burns, {cargo_change} tons charred." },
-          { "chance": 30, "preview": "Struggled", "effects": [{ "resource": "crewHealth", "delta": -10 }, { "resource": "cargo", "delta": -15 }], "message": "Hard fight with the flames. {cargo_change} tons destroyed." },
-          { "chance": 20, "preview": "Out of control", "effects": [{ "resource": "crewHealth", "delta": -15 }, { "resource": "shipCondition", "delta": -15 }, { "resource": "cargo", "delta": -25 }], "message": "Fire raged out of control! {cargo_change} tons lost, hull scorched." }
+          { "chance": 60, "preview": "Systems isolated", "effects": [{ "resource": "fuel", "delta": -5 }], "message": "Affected networks isolated. Running on backup systems — less efficient but operational." },
+          { "chance": 40, "preview": "Cargo monitoring lost", "effects": [{ "resource": "fuel", "delta": -5 }, { "resource": "cargo", "delta": -5 }], "message": "Isolation killed cargo environmental controls. {cargo_change} tons of sensitive equipment damaged." }
         ]
       },
       {
-        "text": "Jettison burning cargo",
+        "text": "Manual override — all hands",
         "outcomes": [
-          { "chance": 70, "preview": "Quick resolution", "effects": [{ "resource": "cargo", "delta": -20 }], "message": "Dumped {cargo_change} tons of burning cargo overboard. Fire out." },
-          { "chance": 30, "preview": "Fire spread first", "effects": [{ "resource": "cargo", "delta": -25 }, { "resource": "shipCondition", "delta": -10 }], "message": "Jettisoned cargo but fire already damaged the hull. {cargo_change} tons lost." }
+          { "chance": 50, "preview": "Crew handles it", "effects": [{ "resource": "crewHealth", "delta": -8 }], "message": "All hands on manual stations. Exhausting but systems restored." },
+          { "chance": 50, "preview": "Exhausting effort", "effects": [{ "resource": "crewHealth", "delta": -15 }], "message": "36-hour manual watch rotation. Crew near collapse but ship stays running." }
+        ]
+      },
+      {
+        "text": "Counter-hack ($25)",
+        "outcomes": [
+          { "chance": 70, "preview": "Systems restored", "requires": { "funds": 25 }, "effects": [{ "resource": "funds", "delta": -25 }], "message": "Cyber team traced and neutralized the intrusion. Full systems restored.", "failEffects": [{ "resource": "crewHealth", "delta": -15 }, { "resource": "shipCondition", "delta": -10 }], "failMessage": "No funds for cyber response tools. Systems degrade, crew struggles." },
+          { "chance": 30, "preview": "Partial restore", "requires": { "funds": 25 }, "effects": [{ "resource": "funds", "delta": -25 }, { "resource": "crewHealth", "delta": -5 }], "message": "Intrusion partially neutralized. Some systems still degraded.", "failEffects": [{ "resource": "crewHealth", "delta": -15 }, { "resource": "shipCondition", "delta": -10 }], "failMessage": "No funds for cyber response tools. Systems degrade, crew struggles." }
         ]
       }
     ]
   },
 
   {
-    "name": "Favorable Winds",
-    "description": "Strong tailwinds fill your sails. The ship surges forward!",
+    "name": "Kuroshio Current",
+    "description": "The Kuroshio Current is strong today. Your ship is making excellent speed with the flow.",
     "type": "good",
     "choices": [
       {
-        "text": "Full speed ahead",
+        "text": "Ride the current",
         "outcomes": [
-          { "chance": 70, "preview": "Extra distance", "effects": [{ "resource": "distanceTraveled", "delta": "speedPerTick" }], "message": "The wind carried you far! Extra distance covered." },
-          { "chance": 30, "preview": "Great distance", "effects": [{ "resource": "distanceTraveled", "delta": "speedPerTick", "multiplier": 2 }], "message": "Incredible winds! Covered a huge stretch of extra distance." }
+          { "chance": 70, "preview": "Good boost", "effects": [{ "resource": "distanceTraveled", "delta": "speedPerTick" }], "message": "The current pushed you well ahead of schedule. Bonus distance covered." },
+          { "chance": 30, "preview": "Exceptional boost", "effects": [{ "resource": "distanceTraveled", "delta": "speedPerTick", "multiplier": 2 }], "message": "Incredible current! Covered a huge stretch with minimal fuel." }
         ]
       }
     ]
   },
 
   {
-    "name": "Floating Cargo",
-    "description": "Your lookout spots barrels and crates floating on the water — salvage from a wreck.",
+    "name": "Allied Supply Cache",
+    "description": "An allied logistics drone has marked a pre-positioned supply cache on a nearby atoll. Encrypted coordinates received.",
     "type": "good",
     "choices": [
       {
-        "text": "Salvage it",
+        "text": "Retrieve supplies",
         "outcomes": [
-          { "chance": 60, "preview": "Good haul", "effects": [{ "resource": "cargo", "delta": 15 }, { "resource": "money", "delta": 10 }], "message": "Recovered {cargo_change} tons of cargo and $10 in valuables." },
-          { "chance": 30, "preview": "Small find", "effects": [{ "resource": "cargo", "delta": 8 }], "message": "Found {cargo_change} tons of salvageable cargo." },
-          { "chance": 10, "preview": "Trap!", "effects": [{ "resource": "crewHealth", "delta": -10 }, { "resource": "money", "delta": 20 }], "message": "It was a pirate trap! Crew injured in the ambush, but found $20 hidden aboard." }
+          { "chance": 55, "preview": "Full cache", "effects": [{ "resource": "fuel", "delta": 10 }, { "resource": "cargo", "delta": 10 }, { "resource": "funds", "delta": 10 }], "message": "Cache intact. Retrieved fuel, cargo, and operational funds. +{fuel_change} fuel, +{cargo_change}t cargo, +$10." },
+          { "chance": 30, "preview": "Partial cache", "effects": [{ "resource": "fuel", "delta": 8 }], "message": "Cache partially depleted by a previous unit. Recovered some fuel." },
+          { "chance": 15, "preview": "Enemy trap", "effects": [{ "resource": "crewHealth", "delta": -10 }, { "resource": "shipCondition", "delta": -10 }], "message": "Booby-trapped by enemy SOF! IED detonated during retrieval. Casualties sustained." }
         ]
       },
       {
-        "text": "Leave it",
+        "text": "Leave it — could be compromised",
         "outcomes": [
-          { "chance": 100, "preview": "Play it safe", "effects": [], "message": "The superstitious crew sighs with relief." }
+          { "chance": 100, "preview": "Continue mission", "effects": [], "message": "Cache left in place. Can't risk the mission on a potential trap." }
         ]
       }
     ]
   },
 
   {
-    "name": "Calm Seas",
-    "description": "The ocean is perfectly still. A rare moment of peace.",
+    "name": "Allied Escort",
+    "description": "A Littoral Combat Ship has been assigned to escort your convoy through this sector. Her crew offers damage control assistance.",
     "type": "good",
     "choices": [
       {
-        "text": "Rest and repair",
+        "text": "Accept escort and assistance",
         "outcomes": [
-          { "chance": 60, "preview": "Crew rests", "effects": [{ "resource": "crewHealth", "delta": 8 }, { "resource": "shipCondition", "delta": 10 }], "message": "The crew rested and patched up the ship." },
-          { "chance": 40, "preview": "Great recovery", "effects": [{ "resource": "crewHealth", "delta": 15 }, { "resource": "shipCondition", "delta": 15 }], "message": "Exceptional recovery! Crew morale soaring, ship in better shape." }
+          { "chance": 60, "preview": "Repairs and rest", "effects": [{ "resource": "crewHealth", "delta": 10 }, { "resource": "shipCondition", "delta": 12 }], "message": "LCS crew assisted with repairs and gave your crew a break. Morale improved." },
+          { "chance": 40, "preview": "Full support", "effects": [{ "resource": "crewHealth", "delta": 15 }, { "resource": "shipCondition", "delta": 15 }, { "resource": "fuel", "delta": 5 }], "message": "Full support package: hull repairs, medical aid, and fuel transfer. Outstanding." }
         ]
       }
     ]
   },
 
   {
-    "name": "Merchant Ship",
-    "description": "A friendly merchant vessel hails you, offering to trade.",
+    "name": "UNREP — Logistics Vessel",
+    "description": "USNS Supply, a fast combat support ship, is conducting underway replenishment in the area. They're offering UNREP.",
     "type": "neutral",
     "choices": [
       {
-        "text": "Buy fuel ($15)",
+        "text": "Request fuel ($12)",
         "outcomes": [
-          { "chance": 70, "preview": "Fair trade", "requires": { "money": 15 }, "effects": [{ "resource": "money", "delta": -15 }, { "resource": "fuel", "delta": 12 }], "message": "Bought 12 fuel for $15.", "failEffects": [], "failMessage": "Not enough money to trade." },
-          { "chance": 30, "preview": "Bonus goods", "requires": { "money": 15 }, "effects": [{ "resource": "money", "delta": -15 }, { "resource": "fuel", "delta": 12 }, { "resource": "crewHealth", "delta": 5 }], "message": "Bought fuel and the merchant threw in some medicine!", "failEffects": [], "failMessage": "Not enough money to trade." }
+          { "chance": 70, "preview": "Standard UNREP", "requires": { "funds": 12 }, "effects": [{ "resource": "funds", "delta": -12 }, { "resource": "fuel", "delta": 15 }], "message": "UNREP complete. +15 fuel received alongside.", "failEffects": [], "failMessage": "Insufficient operational funds for UNREP." },
+          { "chance": 30, "preview": "Bonus stores", "requires": { "funds": 12 }, "effects": [{ "resource": "funds", "delta": -12 }, { "resource": "fuel", "delta": 15 }, { "resource": "crewHealth", "delta": 5 }], "message": "UNREP complete with bonus medical stores. Crew health improved.", "failEffects": [], "failMessage": "Insufficient operational funds for UNREP." }
         ]
       },
       {
-        "text": "Buy cargo ($15)",
+        "text": "Request cargo ($15)",
         "outcomes": [
-          { "chance": 80, "preview": "Standard goods", "requires": { "money": 15 }, "effects": [{ "resource": "money", "delta": -15 }, { "resource": "cargo", "delta": 10 }], "message": "Loaded {cargo_change} tons of cargo.", "failEffects": [], "failMessage": "Not enough money to trade." },
-          { "chance": 20, "preview": "Premium goods", "requires": { "money": 15 }, "effects": [{ "resource": "money", "delta": -15 }, { "resource": "cargo", "delta": 15 }], "message": "Premium goods! Loaded {cargo_change} tons for the price of 10.", "failEffects": [], "failMessage": "Not enough money to trade." }
+          { "chance": 80, "preview": "Standard transfer", "requires": { "funds": 15 }, "effects": [{ "resource": "funds", "delta": -15 }, { "resource": "cargo", "delta": 10 }], "message": "Mission cargo transferred. +{cargo_change} tons loaded.", "failEffects": [], "failMessage": "Insufficient funds for cargo transfer." },
+          { "chance": 20, "preview": "Priority cargo", "requires": { "funds": 15 }, "effects": [{ "resource": "funds", "delta": -15 }, { "resource": "cargo", "delta": 15 }], "message": "Priority resupply — extra mission packages available. +{cargo_change} tons loaded.", "failEffects": [], "failMessage": "Insufficient funds for cargo transfer." }
         ]
       },
       {
-        "text": "Decline",
+        "text": "Decline UNREP",
         "outcomes": [
-          { "chance": 100, "preview": "No trade", "effects": [], "message": "You wave them off and continue sailing." }
+          { "chance": 100, "preview": "Continue mission", "effects": [], "message": "UNREP declined. USNS Supply continues on her route." }
         ]
       }
     ]
   },
 
   {
-    "name": "Dense Fog",
-    "description": "A thick fog rolls in, reducing visibility to almost nothing.",
+    "name": "EMCON Order",
+    "description": "Command orders EMCON Alpha — full emissions control. Enemy over-the-horizon radar is actively scanning this sector.",
     "type": "neutral",
     "choices": [
       {
-        "text": "Slow down",
+        "text": "Comply — reduce speed, go dark",
         "outcomes": [
-          { "chance": 80, "preview": "Safe but slow", "effects": [{ "resource": "fuel", "delta": -3 }], "message": "Navigated safely through the fog. Used extra fuel." },
-          { "chance": 20, "preview": "Discover something", "effects": [{ "resource": "money", "delta": 15 }], "message": "Spotted a drifting chest in the fog! Found $15 inside." }
+          { "chance": 75, "preview": "Evade detection", "effects": [{ "resource": "fuel", "delta": -5 }], "message": "Running dark. Slower transit but enemy radar sweep passed without detecting you." },
+          { "chance": 25, "preview": "Intercept enemy intel", "effects": [{ "resource": "fuel", "delta": -5 }, { "resource": "deterrence", "delta": 10 }], "message": "While dark, SIGINT team intercepted enemy comms. Valuable intelligence forwarded to command. +10 deterrence." }
         ]
       },
       {
-        "text": "Push through",
+        "text": "Maintain speed — risk detection",
         "outcomes": [
-          { "chance": 40, "preview": "Clear quickly", "effects": [], "message": "The fog cleared quickly. No trouble." },
-          { "chance": 35, "preview": "Minor collision", "effects": [{ "resource": "shipCondition", "delta": -10 }], "message": "Hit something in the fog! Minor hull damage." },
-          { "chance": 25, "preview": "Lost course", "effects": [{ "resource": "fuel", "delta": -8 }], "message": "Got completely lost in the fog. Wasted fuel finding your way back." }
+          { "chance": 50, "preview": "Pass undetected", "effects": [], "message": "Lucky — enemy radar missed you despite emissions. No time lost." },
+          { "chance": 30, "preview": "Detected, rerouted", "effects": [{ "resource": "fuel", "delta": -10 }], "message": "Detected! Command orders emergency reroute. Significant fuel wasted." },
+          { "chance": 20, "preview": "Detected, engaged", "effects": [{ "resource": "crewHealth", "delta": -10 }, { "resource": "shipCondition", "delta": -10 }], "message": "Detected and targeted! Anti-ship missile launched — countermeasures barely intercepted it." }
         ]
       }
     ]
   },
 
   {
-    "name": "Mysterious Island",
-    "description": "An uncharted island appears through the mist. Lush and inviting.",
+    "name": "Disputed Waters",
+    "description": "A foreign naval destroyer is shadowing your movements and demanding over radio that you alter course. This is contested territory.",
     "type": "neutral",
     "choices": [
       {
-        "text": "Explore the island",
+        "text": "Comply and alter course",
         "outcomes": [
-          { "chance": 40, "preview": "Treasure!", "effects": [{ "resource": "money", "delta": 25 }, { "resource": "fuel", "delta": 5 }], "message": "Found a hidden cache! $25 and some fuel." },
-          { "chance": 35, "preview": "Fresh water", "effects": [{ "resource": "crewHealth", "delta": 10 }, { "resource": "fuel", "delta": 5 }], "message": "Found fresh water and fruit. Crew health improved!" },
-          { "chance": 25, "preview": "Hostile wildlife", "effects": [{ "resource": "crewHealth", "delta": -12 }], "message": "Dangerous wildlife! Crew injured in the retreat." }
+          { "chance": 80, "preview": "Peaceful detour", "effects": [{ "resource": "fuel", "delta": -8 }], "message": "Altered course to avoid confrontation. Fuel burned on the detour." },
+          { "chance": 20, "preview": "They follow anyway", "effects": [{ "resource": "fuel", "delta": -10 }, { "resource": "crewHealth", "delta": -5 }], "message": "They followed despite compliance. Tense standoff before they broke off. Crew rattled." }
         ]
       },
       {
-        "text": "Sail past",
+        "text": "Assert freedom of navigation",
         "outcomes": [
-          { "chance": 100, "preview": "Continue voyage", "effects": [], "message": "You sail past, wondering what might have been." }
+          { "chance": 55, "preview": "They back down", "effects": [], "message": "Held course and broadcast legal justification. The destroyer shadowed but didn't interfere." },
+          { "chance": 30, "preview": "Aggressive maneuvering", "effects": [{ "resource": "shipCondition", "delta": -10 }, { "resource": "crewHealth", "delta": -5 }], "message": "The destroyer made aggressive close passes. Near-collision damaged your hull." },
+          { "chance": 15, "preview": "Escalation", "effects": [{ "resource": "crewHealth", "delta": -15 }, { "resource": "shipCondition", "delta": -15 }, { "resource": "funds", "delta": -15 }], "message": "Water cannon and laser dazzlers employed against your bridge. Crew blinded, equipment damaged." }
         ]
       }
     ]

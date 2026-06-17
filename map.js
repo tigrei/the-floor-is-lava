@@ -1,45 +1,47 @@
-/* ============================================================
-   map.js — Canvas-based map rendering
-   ============================================================
-   Responsibilities:
-     - Define port coordinates and the route
-     - Draw ocean background, route line, ports, and ship icon
-     - Interpolate ship position along the route based on progress
-   ============================================================ */
-
 class GameMap {
   constructor(canvasId) {
     this.canvas = document.getElementById(canvasId);
     this.ctx    = this.canvas.getContext("2d");
 
-    // Port definitions: { name, x, y } in normalized 0–1 space
-    // (mapped to actual canvas size during render)
     this.ports = [
-      { name: "Bangkok",        nx: 0.19, ny: 0.34 },
-      { name: "Ho Chi Minh",    nx: 0.35, ny: 0.42 },
-      { name: "Singapore",      nx: 0.28, ny: 0.66 },
-      { name: "Jakarta",        nx: 0.35, ny: 0.85 },
-      { name: "Bali",           nx: 0.57, ny: 0.92 },
-      { name: "Makassar",       nx: 0.68, ny: 0.82 },
-      { name: "Brunei",         nx: 0.56, ny: 0.57 },
-      { name: "Manila",         nx: 0.72, ny: 0.32 },
+      { name: "Guam",           nx: 0.88, ny: 0.48, state: "secure" },
+      { name: "Palau",          nx: 0.73, ny: 0.72, state: "secure" },
+      { name: "Davao",          nx: 0.50, ny: 0.85, state: "secure" },
+      { name: "Palawan",        nx: 0.32, ny: 0.65, state: "contested",
+        mission: {
+          name: "RADR — Airfield Repair",
+          briefing: "Palawan's primary airstrip took a hit from a loitering munition. Allied P-8 Poseidons cannot launch for sub-hunting until craters are filled and the runway is certified.",
+          cargoRequired: 20, reward: 40, fundsReward: 20, deadline: 25, delivered: 0,
+        },
+      },
+      { name: "Subic Bay",      nx: 0.38, ny: 0.40, state: "secure" },
+      { name: "Batanes",        nx: 0.42, ny: 0.18, state: "contested",
+        mission: {
+          name: "ROWPU — Water Security",
+          briefing: "The Batanes garrison's aquifers have been intentionally contaminated. Combat effectiveness dropping 15% daily. Deploy water purification before forced surrender.",
+          cargoRequired: 20, reward: 50, fundsReward: 20, deadline: 38, delivered: 0,
+        },
+      },
+      { name: "Kaohsiung",      nx: 0.28, ny: 0.08, state: "contested",
+        mission: {
+          name: "Coastal Fortification",
+          briefing: "Amphibious flotilla massing 200nm out. Reinforce the beachhead with Hesco barriers, anti-ship missile emplacements, and OTH radar to deny the landing zone.",
+          cargoRequired: 20, reward: 60, fundsReward: 20, deadline: 45, delivered: 0,
+        },
+      },
     ];
 
-    // Total route distance (arbitrary units — game uses this for progress)
     this.totalDistance = this._computeTotalDistance();
-
     this._resize();
     window.addEventListener("resize", () => this._resize());
   }
 
-  /* Fit canvas to its container */
   _resize() {
     const rect = this.canvas.parentElement.getBoundingClientRect();
     this.canvas.width  = rect.width;
     this.canvas.height = rect.height;
   }
 
-  /* Sum Euclidean segment lengths in normalized space */
   _computeTotalDistance() {
     let d = 0;
     for (let i = 1; i < this.ports.length; i++) {
@@ -50,7 +52,6 @@ class GameMap {
     return d;
   }
 
-  /* Convert normalized coords to canvas pixels */
   _toPixel(nx, ny) {
     const pad = 40;
     return {
@@ -59,60 +60,46 @@ class GameMap {
     };
   }
 
-  /* Get the ship's pixel position from a 0–1 progress fraction */
   getShipPosition(progress) {
     const clamped = Math.max(0, Math.min(1, progress));
     const targetDist = clamped * this.totalDistance;
-
     let accumulated = 0;
     for (let i = 1; i < this.ports.length; i++) {
       const a = this.ports[i - 1];
       const b = this.ports[i];
       const segLen = Math.hypot(b.nx - a.nx, b.ny - a.ny);
-
       if (accumulated + segLen >= targetDist) {
         const t = (targetDist - accumulated) / segLen;
-        const nx = a.nx + t * (b.nx - a.nx);
-        const ny = a.ny + t * (b.ny - a.ny);
-        return this._toPixel(nx, ny);
+        return this._toPixel(a.nx + t * (b.nx - a.nx), a.ny + t * (b.ny - a.ny));
       }
       accumulated += segLen;
     }
-
-    // At the end
     const last = this.ports[this.ports.length - 1];
     return this._toPixel(last.nx, last.ny);
   }
 
-  /* Return the index of the next upcoming port (or -1 if voyage complete) */
-  getNextPortIndex(progress) {
-    const clamped = Math.max(0, Math.min(1, progress));
-    const targetDist = clamped * this.totalDistance;
-
-    let accumulated = 0;
-    for (let i = 1; i < this.ports.length; i++) {
-      const segLen = Math.hypot(
-        this.ports[i].nx - this.ports[i - 1].nx,
-        this.ports[i].ny - this.ports[i - 1].ny,
-      );
-      accumulated += segLen;
-      if (accumulated > targetDist) return i;
-    }
-    return -1;
+  _getStateColor(state) {
+    if (state === "contested") return "#ffd54f";
+    if (state === "fallen")    return "#ef5350";
+    return "#4fc3f7";
   }
 
-  /* Main render — call every frame/tick */
+  _getStateFill(state, alpha) {
+    if (state === "contested") return `rgba(255, 213, 79, ${alpha})`;
+    if (state === "fallen")    return `rgba(239, 83, 80, ${alpha})`;
+    return `rgba(79, 195, 247, ${alpha})`;
+  }
+
   render(progress) {
     const { ctx, canvas } = this;
     const W = canvas.width;
     const H = canvas.height;
 
-    // --- Ocean background ---
     ctx.fillStyle = "#0a1929";
     ctx.fillRect(0, 0, W, H);
     this._drawWaves();
 
-    // --- Route line (dashed) ---
+    // Route line (dashed)
     ctx.beginPath();
     ctx.setLineDash([8, 6]);
     ctx.strokeStyle = "rgba(79,195,247,0.3)";
@@ -125,7 +112,7 @@ class GameMap {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // --- Traveled portion (solid bright line) ---
+    // Traveled portion (solid)
     ctx.beginPath();
     ctx.strokeStyle = "#4fc3f7";
     ctx.lineWidth = 3;
@@ -152,35 +139,35 @@ class GameMap {
     }
     ctx.stroke();
 
-    // --- Port markers ---
+    // Port markers
     for (let i = 0; i < this.ports.length; i++) {
       const port = this.ports[i];
       const p = this._toPixel(port.nx, port.ny);
       const isVisited = this._isPortVisited(i, progress);
+      const color = this._getStateColor(port.state);
 
       // Outer ring
       ctx.beginPath();
       ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
-      ctx.fillStyle = isVisited ? "#4fc3f7" : "rgba(79,195,247,0.2)";
+      ctx.fillStyle = isVisited ? color : this._getStateFill(port.state, 0.2);
       ctx.fill();
-      ctx.strokeStyle = "#4fc3f7";
+      ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.stroke();
 
       // Inner dot
       ctx.beginPath();
       ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = isVisited ? "#ffffff" : "#4fc3f7";
+      ctx.fillStyle = isVisited ? "#ffffff" : color;
       ctx.fill();
 
       // Label
-      ctx.fillStyle = "#d4dce8";
-      ctx.font = "12px 'Segoe UI', system-ui, sans-serif";
+      ctx.fillStyle = color;
+      ctx.font = "11px 'Segoe UI', system-ui, sans-serif";
       ctx.textAlign = "center";
       ctx.fillText(port.name, p.x, p.y - 16);
     }
 
-    // --- Ship icon ---
     this._drawShip(shipPos.x, shipPos.y, progress);
   }
 
@@ -196,7 +183,6 @@ class GameMap {
     return (progress * this.totalDistance) >= acc;
   }
 
-  /* Simple animated wave lines for atmosphere */
   _drawWaves() {
     const { ctx, canvas } = this;
     const t = Date.now() / 3000;
@@ -213,12 +199,9 @@ class GameMap {
     }
   }
 
-  /* Draw a simple triangle ship */
   _drawShip(x, y, progress) {
     const { ctx } = this;
     const size = 12;
-
-    // Determine direction from last segment
     let angle = 0;
     const clamped = Math.max(0, Math.min(1, progress));
     const targetDist = clamped * this.totalDistance;
@@ -239,12 +222,9 @@ class GameMap {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
-
-    // Glow
     ctx.shadowColor = "#4fc3f7";
     ctx.shadowBlur = 12;
 
-    // Hull
     ctx.beginPath();
     ctx.moveTo(size, 0);
     ctx.lineTo(-size * 0.7, -size * 0.6);
@@ -254,7 +234,6 @@ class GameMap {
     ctx.fillStyle = "#ffffff";
     ctx.fill();
 
-    // Sail
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(-size * 0.3, -size);
