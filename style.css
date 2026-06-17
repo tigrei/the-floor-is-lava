@@ -12,6 +12,7 @@
   --danger: #ef5350;
   --success: #66bb6a;
   --gold: #ffd54f;
+  --fuel: #ff9800;
   --sea: #0d2137;
   --radius: 8px;
 }
@@ -148,11 +149,11 @@ body {
   font-weight: 600;
 }
 
-/* Color-coded resource values */
-#res-food   { color: var(--success); }
-#res-health { color: var(--accent); }
-#res-ship   { color: var(--accent); }
-#res-gold   { color: var(--gold); }
+#res-money              { color: var(--gold); }
+#res-health             { color: var(--accent); }
+#res-ship               { color: var(--accent); }
+#res-cargo, #res-cargo-max { color: var(--success); }
+#res-fuel               { color: var(--fuel); }
 
 /* --- Captain's Log --- */
 #log {
@@ -207,7 +208,7 @@ body {
   border: 1px solid var(--accent);
   border-radius: var(--radius);
   padding: 28px 32px;
-  max-width: 440px;
+  max-width: 500px;
   width: 90%;
   text-align: center;
 }
@@ -218,7 +219,7 @@ body {
   font-size: 1.2rem;
 }
 
-#modal p {
+#modal-body {
   color: var(--text);
   margin-bottom: 20px;
   line-height: 1.5;
@@ -227,12 +228,12 @@ body {
 
 #modal-choices {
   display: flex;
+  flex-direction: column;
   gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
+  align-items: stretch;
 }
 
-#modal-choices button {
+#modal-choices > button {
   padding: 8px 20px;
   border: 1px solid var(--accent);
   border-radius: var(--radius);
@@ -243,7 +244,124 @@ body {
   transition: background 0.2s, color 0.2s;
 }
 
-#modal-choices button:hover {
+#modal-choices > button:hover {
   background: var(--accent);
   color: var(--bg-dark);
+}
+
+/* ============================================================
+   Event Choices with Outcome Previews
+   ============================================================ */
+.event-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.choice-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.choice-option button {
+  width: 100%;
+  padding: 8px 20px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+.choice-option button:hover {
+  background: var(--accent);
+  color: var(--bg-dark);
+}
+
+.choice-outcomes {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.choice-outcomes span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: rgba(79, 195, 247, 0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   Port Trading Modal
+   ============================================================ */
+.port-resources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 16px;
+  padding: 10px;
+  background: rgba(79, 195, 247, 0.05);
+  border-radius: var(--radius);
+}
+
+.port-resources span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.port-resources b {
+  color: var(--text);
+}
+
+.port-trades {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.port-trades button {
+  width: 100%;
+  padding: 7px 16px;
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s, color 0.2s, opacity 0.2s;
+}
+
+.port-trades button:hover:not(:disabled) {
+  background: rgba(79, 195, 247, 0.15);
+}
+
+.port-trades button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  color: var(--text-muted);
+}
+
+.btn-set-sail {
+  margin-top: 8px;
+  padding: 10px 24px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent) !important;
+  color: var(--bg-dark) !important;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.btn-set-sail:hover {
+  opacity: 0.85;
 }

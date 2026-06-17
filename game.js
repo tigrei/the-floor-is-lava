@@ -1,160 +1,169 @@
-/* ============================================================
-   game.js — Core game loop and state management
-   ============================================================
-   Orchestrates map, ui, and events modules.
-   Tick-based: each "day" advances the ship, consumes food,
-   and may trigger a random event.
-   ============================================================ */
-
 class Game {
   constructor() {
     this.map = new GameMap("map-canvas");
     this.ui  = new UI();
 
-    // --- Game state ---
     this.state = {
       day:               1,
-      food:              100,
+      money:             50,
       crewHealth:        100,
       shipCondition:     100,
-      gold:              50,
+      cargo:             60,
+      maxCargo:          100,
+      fuel:              80,
       distanceTraveled:  0,
-      totalRouteDistance: 1000,   // arbitrary distance units
-      speedPerTick:      25,     // distance per day
+      totalRouteDistance: 1000,
+      speedPerTick:      25,
       destinationName:   this.map.ports[this.map.ports.length - 1].name,
       gameOver:          false,
     };
 
-    // Auto-sail interval handle
-    this._autoInterval = null;
-
-    // Busy flag — prevents overlapping ticks while a modal is open
-    this._ticking = false;
+    this._sailing = false;
+    this._tickTimer = null;
+    this._busy = false;
+    this._visitedPorts = new Set([0]);
+    this._eventCooldown = 0;
+    this._lastTickDistance = 0;
 
     this._bindControls();
     this._render();
-    this.ui.addLog(1, "Set sail from " + this.map.ports[0].name + "!", "port");
+    this.ui.addLog(1, `Set sail from ${this.map.ports[0].name} with ${this.state.cargo} tons of cargo!`, "port");
   }
 
-  /* Wire up header buttons */
   _bindControls() {
     document.getElementById("btn-sail").addEventListener("click", () => {
-      this.tick();
-    });
-
-    const autoBtn = document.getElementById("btn-auto");
-    autoBtn.addEventListener("click", () => {
-      if (this._autoInterval) {
-        this._stopAuto();
-      } else {
-        this._startAuto();
-      }
+      if (this._busy) return;
+      if (this._sailing) this._stopSailing();
+      else this._startSailing();
     });
   }
 
-  _startAuto() {
-    const btn = document.getElementById("btn-auto");
+  _startSailing() {
+    if (this._sailing || this.state.gameOver) return;
+    this._sailing = true;
+    const btn = document.getElementById("btn-sail");
+    btn.textContent = "Pause";
     btn.dataset.running = "true";
-    btn.textContent = "Stop";
-    this._autoInterval = setInterval(() => this.tick(), 1200);
+    this._scheduleNextTick();
   }
 
-  _stopAuto() {
-    const btn = document.getElementById("btn-auto");
+  _stopSailing() {
+    this._sailing = false;
+    clearTimeout(this._tickTimer);
+    this._tickTimer = null;
+    const btn = document.getElementById("btn-sail");
+    btn.textContent = "Set Sail";
     btn.dataset.running = "false";
-    btn.textContent = "Auto-Sail";
-    clearInterval(this._autoInterval);
-    this._autoInterval = null;
   }
 
-  /* --------------------------------------------------------
-     Core tick — one "day" of the voyage
-     -------------------------------------------------------- */
-  async tick() {
-    if (this.state.gameOver || this._ticking) return;
-    this._ticking = true;
+  _scheduleNextTick() {
+    if (!this._sailing || this.state.gameOver) return;
+    this._tickTimer = setTimeout(() => this._doTick(), 800);
+  }
+
+  async _doTick() {
+    if (this.state.gameOver || this._busy) return;
+    this._busy = true;
 
     const s = this.state;
     s.day++;
 
-    // --- Travel ---
-    s.distanceTraveled += s.speedPerTick;
-
-    // --- Daily resource drain ---
-    s.food = Math.max(0, s.food - 2);
-
-    // Starvation penalty
-    if (s.food === 0) {
+    if (s.fuel > 0) {
+      s.fuel = Math.max(0, s.fuel - 2);
+      this._lastTickDistance = s.speedPerTick;
+    } else {
+      this._lastTickDistance = Math.floor(s.speedPerTick * 0.3);
       s.crewHealth = Math.max(0, s.crewHealth - 5);
-      this.ui.addLog(s.day, "No food! Crew health is dropping.", "bad");
+      this.ui.addLog(s.day, "Out of fuel! Drifting. Crew losing hope.", "bad");
     }
 
-    // Poor ship condition slows travel
-    if (s.shipCondition < 20) {
-      s.distanceTraveled = Math.max(0, s.distanceTraveled - Math.floor(s.speedPerTick * 0.3));
-      this.ui.addLog(s.day, "Ship badly damaged — progress slowed.", "bad");
+    s.distanceTraveled += this._lastTickDistance;
+
+    if (s.shipCondition > 0 && s.shipCondition < 20) {
+      s.crewHealth = Math.max(0, s.crewHealth - 2);
+      this.ui.addLog(s.day, "Ship badly damaged — taking on water.", "bad");
     }
 
-    // --- Check for port arrival ---
-    this._checkPortArrival();
+    this._render();
 
-    // --- Random event (pauses auto-sail while modal is open) ---
-    if (shouldEventTrigger()) {
+    // Port arrival
+    const portIndex = this._getReachedPort();
+    if (portIndex !== -1) {
+      this._visitedPorts.add(portIndex);
+      this._stopSailing();
+      this.ui.addLog(s.day, `Arrived at ${this.map.ports[portIndex].name}!`, "port");
+      this._render();
+
+      if (portIndex === this.map.ports.length - 1) {
+        s.gameOver = true;
+        this.ui.showGameOver(true, s);
+        this._busy = false;
+        return;
+      }
+
+      await this.ui.showPort(this.map.ports[portIndex].name, s);
+      this._render();
+      this._busy = false;
+      this._startSailing();
+      return;
+    }
+
+    // Random event
+    if (this._eventCooldown <= 0 && shouldEventTrigger()) {
+      this._eventCooldown = 2;
+      this._stopSailing();
       const event = getRandomEvent();
-      if (this._autoInterval) this._stopAuto();
       const result = await this.ui.showEvent(event, s);
       this.ui.addLog(s.day, result.message, result.type);
+      this._render();
+      this._busy = false;
+      this._startSailing();
+      return;
     }
+    if (this._eventCooldown > 0) this._eventCooldown--;
 
-    // --- Win/lose check ---
-    if (s.distanceTraveled >= s.totalRouteDistance) {
+    // Game over checks
+    if (s.crewHealth <= 0) {
       s.gameOver = true;
-      this._stopAuto();
-      this.ui.showGameOver(true, s);
-    } else if (s.crewHealth <= 0) {
-      s.gameOver = true;
-      this._stopAuto();
+      this._stopSailing();
       this.ui.addLog(s.day, "The crew has perished.", "bad");
       this.ui.showGameOver(false, s);
     } else if (s.shipCondition <= 0) {
       s.gameOver = true;
-      this._stopAuto();
+      this._stopSailing();
       this.ui.addLog(s.day, "The ship sank beneath the waves.", "bad");
       this.ui.showGameOver(false, s);
     }
 
     this._render();
-    this._ticking = false;
+    this._busy = false;
+
+    if (this._sailing && !s.gameOver) {
+      this._scheduleNextTick();
+    }
   }
 
-  /* Detect if we just crossed a port threshold and log it */
-  _checkPortArrival() {
+  _getReachedPort() {
     const s = this.state;
     const progress = s.distanceTraveled / s.totalRouteDistance;
-    const ports = this.map.ports;
+    const prevProgress = (s.distanceTraveled - this._lastTickDistance) / s.totalRouteDistance;
 
-    // Check each intermediate port
     let cumulative = 0;
-    for (let i = 1; i < ports.length - 1; i++) {
+    for (let i = 1; i < this.map.ports.length; i++) {
       const segLen = Math.hypot(
-        ports[i].nx - ports[i - 1].nx,
-        ports[i].ny - ports[i - 1].ny,
+        this.map.ports[i].nx - this.map.ports[i - 1].nx,
+        this.map.ports[i].ny - this.map.ports[i - 1].ny,
       );
       cumulative += segLen;
       const portProgress = cumulative / this.map.totalDistance;
 
-      // Fire once when we cross the port threshold
-      const prevProgress = (s.distanceTraveled - s.speedPerTick) / s.totalRouteDistance;
-      if (prevProgress < portProgress && progress >= portProgress) {
-        // Port arrival bonus
-        s.food = Math.min(100, s.food + 10);
-        s.crewHealth = Math.min(100, s.crewHealth + 5);
-        this.ui.addLog(s.day, `Arrived at ${ports[i].name}! Resupplied.`, "port");
+      if (!this._visitedPorts.has(i) && prevProgress < portProgress && progress >= portProgress) {
+        return i;
       }
     }
+    return -1;
   }
 
-  /* Render map and sidebar */
   _render() {
     const progress = this.state.distanceTraveled / this.state.totalRouteDistance;
     this.map.render(progress);
@@ -162,9 +171,6 @@ class Game {
   }
 }
 
-/* ============================================================
-   Boot the game when the DOM is ready
-   ============================================================ */
 document.addEventListener("DOMContentLoaded", () => {
   window.game = new Game();
 });
