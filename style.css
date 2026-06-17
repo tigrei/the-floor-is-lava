@@ -13,6 +13,9 @@
   --success: #66bb6a;
   --gold: #ffd54f;
   --fuel: #ff9800;
+  --deterrence: #ab47bc;
+  --contested: #ffd54f;
+  --fallen: #ef5350;
   --sea: #0d2137;
   --radius: 8px;
 }
@@ -40,7 +43,6 @@ body {
   height: 100vh;
 }
 
-/* --- Header --- */
 #header {
   display: flex;
   align-items: center;
@@ -91,14 +93,12 @@ body {
   text-align: right;
 }
 
-/* --- Main Layout --- */
 #main {
   display: flex;
   flex: 1;
   overflow: hidden;
 }
 
-/* --- Map Area --- */
 #map-area {
   flex: 1;
   position: relative;
@@ -111,9 +111,11 @@ body {
   display: block;
 }
 
-/* --- Sidebar --- */
+/* ============================================================
+   Sidebar
+   ============================================================ */
 #sidebar {
-  width: 260px;
+  width: 280px;
   background: var(--bg-panel);
   padding: 20px;
   border-left: 1px solid var(--accent-dim);
@@ -149,13 +151,16 @@ body {
   font-weight: 600;
 }
 
-#res-money              { color: var(--gold); }
+#res-deterrence         { color: var(--deterrence); }
+#res-funds              { color: var(--gold); }
 #res-health             { color: var(--accent); }
 #res-ship               { color: var(--accent); }
 #res-cargo, #res-cargo-max { color: var(--success); }
 #res-fuel               { color: var(--fuel); }
 
-/* --- Captain's Log --- */
+/* ============================================================
+   Ops Log
+   ============================================================ */
 #log {
   flex: 1;
   overflow-y: auto;
@@ -208,7 +213,7 @@ body {
   border: 1px solid var(--accent);
   border-radius: var(--radius);
   padding: 28px 32px;
-  max-width: 500px;
+  max-width: 520px;
   width: 90%;
   text-align: center;
 }
@@ -250,7 +255,7 @@ body {
 }
 
 /* ============================================================
-   Event Choices with Outcome Previews
+   Event Choices
    ============================================================ */
 .event-choices {
   display: flex;
@@ -298,7 +303,41 @@ body {
 }
 
 /* ============================================================
-   Port Trading Modal
+   Mission Briefing
+   ============================================================ */
+.mission-briefing {
+  text-align: left;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: rgba(255, 213, 79, 0.06);
+  border: 1px solid rgba(255, 213, 79, 0.2);
+  border-radius: var(--radius);
+}
+
+.mission-title {
+  color: var(--contested);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.mission-desc {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.mission-progress {
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* ============================================================
+   Port Trading
    ============================================================ */
 .port-resources {
   display: flex;
@@ -364,4 +403,17 @@ body {
 
 .btn-set-sail:hover {
   opacity: 0.85;
+}
+
+/* ============================================================
+   Game Over Stats
+   ============================================================ */
+.game-over-stats p {
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.game-over-stats b {
+  color: var(--text);
 }

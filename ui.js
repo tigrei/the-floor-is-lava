@@ -1,7 +1,8 @@
 class UI {
   constructor() {
     this.els = {
-      money:      document.getElementById("res-money"),
+      deterrence: document.getElementById("res-deterrence"),
+      funds:      document.getElementById("res-funds"),
       health:     document.getElementById("res-health"),
       ship:       document.getElementById("res-ship"),
       cargo:      document.getElementById("res-cargo"),
@@ -18,12 +19,13 @@ class UI {
   }
 
   updateResources(state) {
-    this.els.money.textContent    = state.money;
-    this.els.health.textContent   = state.crewHealth;
-    this.els.ship.textContent     = state.shipCondition;
-    this.els.cargo.textContent    = state.cargo;
-    this.els.cargoMax.textContent = state.maxCargo;
-    this.els.fuel.textContent     = state.fuel;
+    this.els.deterrence.textContent = state.deterrence;
+    this.els.funds.textContent      = state.funds;
+    this.els.health.textContent     = state.crewHealth;
+    this.els.ship.textContent       = state.shipCondition;
+    this.els.cargo.textContent      = state.cargo;
+    this.els.cargoMax.textContent   = state.maxCargo;
+    this.els.fuel.textContent       = state.fuel;
     this.els.dayCounter.textContent = `Day ${state.day}`;
 
     const distLeft = Math.max(0, state.totalRouteDistance - state.distanceTraveled);
@@ -84,61 +86,105 @@ class UI {
     });
   }
 
-  showPort(portName, state) {
+  showPort(port, gameState) {
     return new Promise((resolve) => {
-      this.els.modalTitle.textContent = portName;
+      const tag = port.state.toUpperCase();
+      this.els.modalTitle.textContent = `[${tag}] ${port.name}`;
       this.els.modalChoices.className = "";
-      this._renderPortContent(state, resolve);
+      this._renderPortContent(port, gameState, resolve);
       this.els.overlay.classList.remove("hidden");
     });
   }
 
-  _renderPortContent(state, resolve) {
+  _renderPortContent(port, gs, resolve) {
     this.els.modalBody.innerHTML = "";
     this.els.modalChoices.innerHTML = "";
 
+    // Mission briefing for contested ports
+    if (port.state === "contested" && port.mission) {
+      const m = port.mission;
+      const brief = document.createElement("div");
+      brief.className = "mission-briefing";
+      brief.innerHTML =
+        `<div class="mission-title">${m.name}</div>` +
+        `<p class="mission-desc">${m.briefing}</p>` +
+        `<div class="mission-progress">Progress: ${m.delivered}/${m.cargoRequired}t delivered | Deadline: Day ${m.deadline}</div>`;
+      this.els.modalBody.appendChild(brief);
+    } else if (port.state === "secure") {
+      const desc = document.createElement("p");
+      desc.textContent = "Allied logistics hub. Resupply and repair available.";
+      desc.style.marginBottom = "12px";
+      this.els.modalBody.appendChild(desc);
+    }
+
+    // Resource summary
     const summary = document.createElement("div");
     summary.className = "port-resources";
     summary.innerHTML =
-      `<span>Money: <b>$${state.money}</b></span>` +
-      `<span>Fuel: <b>${state.fuel}</b></span>` +
-      `<span>Cargo: <b>${state.cargo}/${state.maxCargo}t</b></span>` +
-      `<span>Health: <b>${state.crewHealth}%</b></span>` +
-      `<span>Ship: <b>${state.shipCondition}%</b></span>`;
+      `<span>Funds: <b>$${gs.funds}</b></span>` +
+      `<span>Fuel: <b>${gs.fuel}</b></span>` +
+      `<span>Cargo: <b>${gs.cargo}/${gs.maxCargo}t</b></span>` +
+      `<span>Health: <b>${gs.crewHealth}%</b></span>` +
+      `<span>Hull: <b>${gs.shipCondition}%</b></span>`;
     this.els.modalBody.appendChild(summary);
 
+    // Trade buttons
     const trades = document.createElement("div");
     trades.className = "port-trades";
 
+    // Mission delivery (contested with active mission)
+    if (port.state === "contested" && port.mission) {
+      const m = port.mission;
+      const remaining = m.cargoRequired - m.delivered;
+      if (remaining > 0) {
+        const amt = Math.min(10, remaining);
+        const det = Math.floor(m.reward * amt / m.cargoRequired);
+        const pay = Math.floor(m.fundsReward * amt / m.cargoRequired);
+        trades.appendChild(this._tradeBtn(
+          `Deliver ${amt}t Cargo → +${det} Det, +$${pay}`,
+          () => gs.cargo >= amt,
+          () => {
+            gs.cargo -= amt;
+            gs.deterrence += det;
+            gs.funds += pay;
+            m.delivered += amt;
+            if (m.delivered >= m.cargoRequired) port.state = "secure";
+            this._renderPortContent(port, gs, resolve);
+          },
+        ));
+      }
+    }
+
+    const isSecure = port.state === "secure";
+    const fuelPrice = isSecure ? 10 : 15;
+    const repairPrice = isSecure ? 10 : 15;
+    const healPrice = isSecure ? 10 : 15;
+
     trades.appendChild(this._tradeBtn(
-      "Sell 10 Cargo → +$30",
-      () => state.cargo >= 10,
-      () => { state.cargo -= 10; state.money += 30; this._renderPortContent(state, resolve); },
+      `Resupply Fuel +10 → $${fuelPrice}`,
+      () => gs.funds >= fuelPrice && gs.fuel < 100,
+      () => { gs.funds -= fuelPrice; gs.fuel = Math.min(100, gs.fuel + 10); this._renderPortContent(port, gs, resolve); },
     ));
 
     trades.appendChild(this._tradeBtn(
-      "Buy 10 Fuel → $15",
-      () => state.money >= 15 && state.fuel < 100,
-      () => { state.money -= 15; state.fuel = Math.min(100, state.fuel + 10); this._renderPortContent(state, resolve); },
+      `Repair Hull +20 → $${repairPrice}`,
+      () => gs.funds >= repairPrice && gs.shipCondition < 100,
+      () => { gs.funds -= repairPrice; gs.shipCondition = Math.min(100, gs.shipCondition + 20); this._renderPortContent(port, gs, resolve); },
     ));
 
     trades.appendChild(this._tradeBtn(
-      "Buy 10 Cargo → $20",
-      () => state.money >= 20 && state.cargo + 10 <= state.maxCargo,
-      () => { state.money -= 20; state.cargo += 10; this._renderPortContent(state, resolve); },
+      `Rest Crew +20 → $${healPrice}`,
+      () => gs.funds >= healPrice && gs.crewHealth < 100,
+      () => { gs.funds -= healPrice; gs.crewHealth = Math.min(100, gs.crewHealth + 20); this._renderPortContent(port, gs, resolve); },
     ));
 
-    trades.appendChild(this._tradeBtn(
-      "Heal Crew +20 → $15",
-      () => state.money >= 15 && state.crewHealth < 100,
-      () => { state.money -= 15; state.crewHealth = Math.min(100, state.crewHealth + 20); this._renderPortContent(state, resolve); },
-    ));
-
-    trades.appendChild(this._tradeBtn(
-      "Repair Ship +20 → $15",
-      () => state.money >= 15 && state.shipCondition < 100,
-      () => { state.money -= 15; state.shipCondition = Math.min(100, state.shipCondition + 20); this._renderPortContent(state, resolve); },
-    ));
+    if (isSecure) {
+      trades.appendChild(this._tradeBtn(
+        "Load 10t Cargo → $15",
+        () => gs.funds >= 15 && gs.cargo + 10 <= gs.maxCargo,
+        () => { gs.funds -= 15; gs.cargo += 10; this._renderPortContent(port, gs, resolve); },
+      ));
+    }
 
     this.els.modalChoices.appendChild(trades);
 
@@ -175,11 +221,31 @@ class UI {
     }
   }
 
-  showGameOver(won, state) {
-    this.els.modalTitle.textContent = won ? "Voyage Complete!" : "Voyage Failed";
-    this.els.modalBody.textContent = won
-      ? `Arrived at ${state.destinationName} on day ${state.day} with $${state.money} and ${state.cargo} tons of cargo!`
-      : "Your voyage has ended. Better luck next time.";
+  showGameOver(won, state, ports) {
+    this.els.modalTitle.textContent = won ? "Mission Accomplished" : "Mission Failed";
+    this.els.modalBody.innerHTML = "";
+
+    const stats = document.createElement("div");
+    stats.className = "game-over-stats";
+
+    if (won) {
+      const secured = ports.filter(p => p.mission && p.state === "secure").map(p => p.name);
+      const fallen = ports.filter(p => p.state === "fallen").map(p => p.name);
+
+      stats.innerHTML =
+        `<p>Day ${state.day} | Deterrence: <b>${state.deterrence}</b> | Funds: <b>$${state.funds}</b></p>` +
+        (secured.length ? `<p>Islands Secured: <b>${secured.join(", ")}</b></p>` : "") +
+        (fallen.length ? `<p>Islands Lost: <b>${fallen.join(", ")}</b></p>` : "") +
+        `<p style="margin-top:12px">The First Island Chain holds. Your engineering packages denied the enemy critical positions.</p>`;
+    } else {
+      const fallen = ports.filter(p => p.state === "fallen").map(p => p.name);
+      stats.innerHTML =
+        `<p>Day ${state.day} | Deterrence: <b>${state.deterrence}</b></p>` +
+        (fallen.length ? `<p>Islands Lost: <b>${fallen.join(", ")}</b></p>` : "") +
+        `<p style="margin-top:12px">The deterrence gap widens. Without Seabee support, the island garrisons cannot hold.</p>`;
+    }
+
+    this.els.modalBody.appendChild(stats);
     this.els.modalChoices.innerHTML = "";
     this.els.modalChoices.className = "";
     const btn = document.createElement("button");
