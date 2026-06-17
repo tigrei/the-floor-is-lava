@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sea Trail</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Top bar with game title and controls -->
+    <header id="header">
+      <h1>Sea Trail</h1>
+      <div id="controls">
+        <button id="btn-sail">Sail One Day</button>
+        <button id="btn-auto" data-running="false">Auto-Sail</button>
+        <span id="day-counter">Day 1</span>
+      </div>
+    </header>
+
+    <!-- Main content: map + sidebar -->
+    <div id="main">
+      <section id="map-area">
+        <canvas id="map-canvas"></canvas>
+      </section>
+
+      <aside id="sidebar">
+        <h2>Ship Status</h2>
+        <ul id="resources">
+          <li>Food: <span id="res-food">100</span></li>
+          <li>Crew Health: <span id="res-health">100</span>%</li>
+          <li>Ship Condition: <span id="res-ship">100</span>%</li>
+          <li>Gold: <span id="res-gold">50</span></li>
+          <li>Distance Left: <span id="res-distance">0</span> mi</li>
+        </ul>
+        <div id="log">
+          <h3>Captain's Log</h3>
+          <ul id="log-entries"></ul>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Modal overlay for events -->
+    <div id="modal-overlay" class="hidden">
+      <div id="modal">
+        <h2 id="modal-title"></h2>
+        <p id="modal-body"></p>
+        <div id="modal-choices"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Load modules in dependency order -->
+  <script src="events.js"></script>
+  <script src="map.js"></script>
+  <script src="ui.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

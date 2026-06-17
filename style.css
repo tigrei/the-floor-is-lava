@@ -1,0 +1,249 @@
+/* ============================================================
+   CSS Variables & Reset
+   ============================================================ */
+:root {
+  --bg-dark: #0b1628;
+  --bg-panel: #122040;
+  --bg-header: #0e1a33;
+  --accent: #4fc3f7;
+  --accent-dim: #1a6e8e;
+  --text: #d4dce8;
+  --text-muted: #7a8ba0;
+  --danger: #ef5350;
+  --success: #66bb6a;
+  --gold: #ffd54f;
+  --sea: #0d2137;
+  --radius: 8px;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ============================================================
+   App Shell
+   ============================================================ */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* --- Header --- */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 24px;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--accent-dim);
+}
+
+#header h1 {
+  font-size: 1.4rem;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#controls button {
+  padding: 8px 18px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+#controls button:hover {
+  background: var(--accent);
+  color: var(--bg-dark);
+}
+
+#controls button[data-running="true"] {
+  background: var(--accent);
+  color: var(--bg-dark);
+}
+
+#day-counter {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  min-width: 70px;
+  text-align: right;
+}
+
+/* --- Main Layout --- */
+#main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* --- Map Area --- */
+#map-area {
+  flex: 1;
+  position: relative;
+  background: var(--sea);
+}
+
+#map-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* --- Sidebar --- */
+#sidebar {
+  width: 260px;
+  background: var(--bg-panel);
+  padding: 20px;
+  border-left: 1px solid var(--accent-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+#sidebar h2 {
+  font-size: 1.1rem;
+  color: var(--accent);
+  border-bottom: 1px solid var(--accent-dim);
+  padding-bottom: 8px;
+}
+
+#resources {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#resources li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+#resources span {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Color-coded resource values */
+#res-food   { color: var(--success); }
+#res-health { color: var(--accent); }
+#res-ship   { color: var(--accent); }
+#res-gold   { color: var(--gold); }
+
+/* --- Captain's Log --- */
+#log {
+  flex: 1;
+  overflow-y: auto;
+}
+
+#log h3 {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+#log-entries {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#log-entries li {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  border-left: 2px solid var(--accent-dim);
+  padding-left: 8px;
+  line-height: 1.4;
+}
+
+#log-entries li.event-bad  { border-color: var(--danger); }
+#log-entries li.event-good { border-color: var(--success); }
+#log-entries li.event-port { border-color: var(--gold); }
+
+/* ============================================================
+   Modal
+   ============================================================ */
+#modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+#modal-overlay.hidden {
+  display: none;
+}
+
+#modal {
+  background: var(--bg-panel);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+}
+
+#modal h2 {
+  color: var(--accent);
+  margin-bottom: 12px;
+  font-size: 1.2rem;
+}
+
+#modal p {
+  color: var(--text);
+  margin-bottom: 20px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+#modal-choices {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+#modal-choices button {
+  padding: 8px 20px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+#modal-choices button:hover {
+  background: var(--accent);
+  color: var(--bg-dark);
+}
