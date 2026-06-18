@@ -18,6 +18,8 @@ class UI {
       if (!button || button.disabled) return;
       this.game.holdPosition();
     });
+
+    this.filterSupplies = false;
   }
 
   renderSidebar() {
@@ -81,6 +83,7 @@ class UI {
   }
 
   _renderActions() {
+    const self = this;
     const state = this.game.state;
     if (state.traveling || state.gameOver) {
       this.els.actionsPanel.innerHTML = "";
@@ -108,7 +111,7 @@ class UI {
     const reqs = this.game.getRequestsAtPort(state.currentPort);
     if (reqs.length > 0) {
       for (const req of reqs) {
-        html += `<div class="action-section"><div class="section-label">DELIVERY: ${req.mission}</div>`;
+        html += `<div class="action-section"><div class="section-label" style="display: inline-block">DELIVERY: ${req.mission}</div>`;
         html += `<div class="delivery-grid">`;
         for (const [type, needed] of Object.entries(req.remaining)) {
           const have = state.cargo[type] || 0;
@@ -141,6 +144,7 @@ class UI {
       const types = Object.keys(SUPPLY_TYPES);
       for (const type of types) {
         const stock = port.inventory[type] || 0;
+        if(stock <= 0 && this.filterSupplies) continue;
         const shipHas = state.cargo[type] || 0;
         
         // --- FIXED DATA ROW (Matching Flex Alignment) ---
@@ -240,7 +244,6 @@ class UI {
         btn.addEventListener("click", () => {
           const outcome = resolveOutcome(choice);
           const message = applyEventOutcome(outcome, state);
-          this.els.modalBody.textContent = message;
           this.els.modalChoices.innerHTML = "";
           const cont = document.createElement("button");
           cont.textContent = "Continue";
