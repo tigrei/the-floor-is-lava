@@ -18,9 +18,9 @@ class GameMap {
     // inventory keys are cargo_id values from supply-data.js (SUPPLY_TYPES)
     this.ports = [
       { name: "Yokosuka",     nx: 0.82, ny: 0.08, type: "base",
-        inventory: { "CARGO-034": 4, "CARGO-033": 3, "CARGO-004": 3, "CARGO-008": 2, "CARGO-010": 1, "CARGO-028": 1, "CARGO-001": 1 } },
+        inventory: { "CARGO-034": 40, "CARGO-033": 30, "CARGO-004": 30, "CARGO-008": 20, "CARGO-010": 10, "CARGO-028": 5, "CARGO-001": 5} },
       { name: "Sasebo",       nx: 0.58, ny: 0.12, type: "base",
-        inventory: { "CARGO-010": 4, "CARGO-013": 3, "CARGO-001": 3, "CARGO-006": 2, "CARGO-028": 2, "CARGO-004": 1, "CARGO-033": 1 } },
+        inventory: { "CARGO-010": 4, "CARGO-013": 30, "CARGO-001": 30, "CARGO-006": 20, "CARGO-028": 20, "CARGO-004": 5, "CARGO-033": 5 } },
       { name: "Okinawa",      nx: 0.68, ny: 0.25, type: "site" },
       { name: "Miyako-jima",  nx: 0.55, ny: 0.33, type: "site" },
       { name: "Yonaguni",     nx: 0.43, ny: 0.30, type: "site" },
@@ -28,12 +28,12 @@ class GameMap {
       { name: "Pratas",       nx: 0.32, ny: 0.54, type: "site" },
       { name: "Batanes",      nx: 0.42, ny: 0.57, type: "site" },
       { name: "Subic Bay",    nx: 0.35, ny: 0.70, type: "base",
-        inventory: { "CARGO-013": 3, "CARGO-008": 3, "CARGO-028": 3, "CARGO-033": 2, "CARGO-010": 2, "CARGO-004": 1, "CARGO-001": 1 } },
+        inventory: { "CARGO-013": 3, "CARGO-008": 30, "CARGO-028": 30, "CARGO-033": 20, "CARGO-010": 5, "CARGO-004": 10, "CARGO-001": 5 } },
       { name: "Palawan",      nx: 0.22, ny: 0.80, type: "site" ,
-        inventory: { "CARGO-013": 3, "CARGO-008": 3, "CARGO-028": 3, "CARGO-033": 2, "CARGO-010": 2, "CARGO-004": 1, "CARGO-001": 1 } },
+        inventory: { "CARGO-013": 3, "CARGO-008": 30, "CARGO-028": 30, "CARGO-033": 25, "CARGO-010": 5, "CARGO-004": 15, "CARGO-001": 5} },
       { name: "Itu Aba",      nx: 0.15, ny: 0.62, type: "site" },
       { name: "Guam",         nx: 0.90, ny: 0.44, type: "base",
-        inventory: { "CARGO-013": 5, "CARGO-001": 4, "CARGO-006": 4, "CARGO-004": 3, "CARGO-027": 2, "CARGO-010": 1, "CARGO-034": 1, "CARGO-028": 1 } },
+        inventory: { "CARGO-013": 5, "CARGO-001": 5, "CARGO-006": 15, "CARGO-004": 30, "CARGO-027": 25, "CARGO-010": 10, "CARGO-034": 10, "CARGO-028": 15 } },
     ];
 
     this.connections = [
