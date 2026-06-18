@@ -119,7 +119,7 @@ class UI {
       html += `<div class="load-row load-header" style="font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 5px;">` +
         `<span class="load-name">Item</span>` +
         `<span class="load-stock" style="text-align: center; flex1;">Base</span>` +
-        `<span class="load-ship"style="text-align: center; flex1;">Ship</span>` +
+        `<span class="load-ship" style="text-align: center; flex1;">Ship</span>` +
         `<span class="load-actions" style="flex: 1; text-align: right; padding-right: 10px;">Actions</span>` +
         `</div>`;
       // ---------------------------
