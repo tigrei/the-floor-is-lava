@@ -1,10 +1,10 @@
-# Sea Trail — First Island Chain: Full Application Context
+# L.A.V.A. — Littoral Asset & Vessel Allocation: Full Application Context
 
 ## Overview
 
-**Sea Trail** is a browser-based logistics strategy game. The player commands a naval logistics ship navigating a graph of 12 ports across the First Island Chain (Japan → Taiwan → Philippines → Guam). The core gameplay is **route planning, cargo management, and fulfilling supply delivery requests** for forward-deployed Seabees and expeditionary combat engineers.
+**L.A.V.A. (Littoral Asset & Vessel Allocation)** is a browser-based logistics strategy game. The player commands a naval logistics ship navigating a graph of 11 ports across the First Island Chain (Japan → Taiwan → Philippines → Guam). The core gameplay is **route planning, cargo management, and fulfilling supply delivery requests** for forward-deployed Seabees and expeditionary combat engineers.
 
-There is no currency, no health system, no combat. The only constraint is cargo capacity (100t) and time (60-day game). Supplies are loaded for free at bases and delivered to remote sites that have active requests.
+There is no currency, no health system, no combat. The constraints are cargo capacity (100t), time (60-day game), and a request-escalation system where neglected requests degrade and ports can become **contested** (blocking travel). Supplies are loaded for free at bases and delivered to remote sites with active requests.
 
 Built with vanilla HTML/CSS/JavaScript. No frameworks, no build step. Open `index.html` in a browser to play.
 
@@ -14,29 +14,28 @@ Built with vanilla HTML/CSS/JavaScript. No frameworks, no build step. Open `inde
 
 ```
 the-floor-is-lava/
-├── index.html          — App shell: header, canvas, sidebar, modal
-├── style.css           — Dark naval theme, sidebar panels, request cards
-├── supply-data.js      — SUPPLY_TYPES dict + REQUEST_TEMPLATES array
-├── events-data.js      — EVENT_DATA array (logistical complications)
-├── events.js           — Event engine: outcome resolution, cargo loss, delay
-├── map.js              — GameMap class: port graph, connections, canvas rendering
-├── ui.js               — UI class: sidebar panels, port actions, event modals
-├── game.js             — Game class: state, travel, cargo, requests, scoring
-├── assets/             — Image assets (see below)
-│   ├── google_earth.png  — Map background image (loaded by map.js)
-│   └── (various .png)    — Ship/weather/cargo illustrations
-├── data_master/        — Reference data (not yet integrated into gameplay)
-│   ├── ships_updated.json  — 10 real US Navy vessel specs
-│   ├── cargo.json          — 27 military/construction cargo items
-│   ├── Data Guide.txt      — ships schema documentation
-│   └── cargo_schema.txt    — cargo schema documentation
-└── CONTEXT.md          — This file
+├── index.html              — App shell: header, canvas, sidebar, modal
+├── style.css               — Dark naval theme, sidebar panels, request cards
+├── events-data.js          — EVENT_DATA array (logistical complications)
+├── events.js               — Event engine + shouldPortResupply()
+├── map.js                  — GameMap class: port graph, connections, canvas rendering
+├── ui.js                   — UI class: sidebar panels, port actions, event modals
+├── game.js                 — Game class: state, travel, cargo, requests, escalation, scoring
+├── assets/                 — Image assets (google_earth.png used as map background)
+├── data_master/
+│   ├── supply-data.js      — SUPPLY_TYPES dict + REQUEST_TEMPLATES (loaded by index.html)
+│   ├── ship_catalog.json   — 10 US Navy vessel specs (reference, not integrated)
+│   ├── ship_data_description.txt — ship schema docs
+│   ├── cargo_data_schema.txt     — cargo schema docs
+│   ├── typhoon.json        — weather resistance grid (reference, not integrated)
+│   └── weather_data_description.txt — weather data schema docs
+└── CONTEXT.md              — This file
 ```
 
 **Script load order** (in index.html):
-`supply-data.js` → `events-data.js` → `events.js` → `map.js` → `ui.js` → `game.js`
+`data_master/supply-data.js` → `events-data.js` → `events.js` → `map.js` → `ui.js` → `game.js`
 
-All classes/functions are globals. Game boots on `DOMContentLoaded`.
+All classes/functions are globals. Game boots on `DOMContentLoaded`. Note: `supply-data.js` lives in `data_master/` but is loaded as a script (defines globals `SUPPLY_TYPES` and `REQUEST_TEMPLATES`).
 
 ---
 
@@ -45,190 +44,181 @@ All classes/functions are globals. Game boots on `DOMContentLoaded`.
 ```js
 // game.js — Game.constructor()
 this.state = {
-  day: 1,                    // Current day (increments each travel tick)
-  currentPort: 11,           // Port index (starts at Guam), null when traveling
+  day: 1,
+  currentPort: 1,            // Port index (starts at Sasebo), null when traveling
   traveling: false,
-  travelFrom: null,          // Source port index
-  travelTo: null,            // Destination port index
-  travelElapsed: 0,          // Days spent traveling
-  travelDaysRemaining: 0,    // Days left (modified by events)
-  cargo: {},                 // { "construction": 15, "heavy": 10 }
-  maxCargo: 100,             // Total tonnage capacity
+  travelFrom: null,
+  travelTo: null,
+  travelElapsed: 0,
+  travelDaysRemaining: 0,
+  cargo: {},                 // { "CARGO-001": 15, "CARGO-013": 10 }
+  maxCargo: 100,
   gameOver: false,
 };
 
-this.score = {
-  fulfilled: 0,              // Completed requests
-  failed: 0,                 // Expired requests
-  onTime: 0,                 // Fulfilled before deadline
-  late: 0,                   // Fulfilled after deadline
-  tonnageDelivered: 0,       // Total tons delivered
-  totalRequests: 0,          // Total requests generated
-};
-
-this.requests = [];          // Array of request objects
+this.score = { fulfilled: 0, failed: 0, onTime: 0, late: 0, tonnageDelivered: 0, totalRequests: 0 };
+this.requests = [];
 ```
 
-All supply types weigh 1 ton per unit. `getCargoTotal()` = sum of all cargo values.
+All supply units weigh 1 ton each for capacity purposes. `getCargoTotal()` = sum of all cargo values.
 
 ---
 
 ## Port Graph (map.js)
 
-### 12 Ports — 4 Bases + 8 Sites
+### 11 Ports — 5 Bases + 6 Sites
 
-| Idx | Name | Type | Position (nx, ny) | Specialty |
-|-----|------|------|-------------------|-----------|
-| 0 | Yokosuka | base | (0.82, 0.08) | Power, Comms, Shelter |
-| 1 | Sasebo | base | (0.58, 0.12) | Bridging, Construction, Heavy |
-| 2 | Okinawa | site | (0.68, 0.25) | — |
-| 3 | Miyako-jima | site | (0.55, 0.33) | — |
-| 4 | Yonaguni | site | (0.43, 0.30) | — |
-| 5 | Green Island | site | (0.47, 0.42) | — |
-| 6 | Pratas | site | (0.32, 0.54) | — |
-| 7 | Batanes | site | (0.42, 0.57) | — |
-| 8 | Subic Bay | base | (0.35, 0.70) | Tools, Water, Comms |
-| 9 | Palawan | site | (0.22, 0.80) | — |
-| 10 | Itu Aba | site | (0.15, 0.62) | — |
-| 11 | Guam | base | (0.90, 0.44) | Construction, Heavy, Shelter |
+| Idx | Name | Type | Position (nx, ny) |
+|-----|------|------|-------------------|
+| 0 | Yokosuka | base | (0.97, 0.03) |
+| 1 | Sasebo | base | (0.70, 0.15) — **start** |
+| 2 | Okinawa | site | (0.64, 0.47) |
+| 3 | Kunsan | base | (0.63, 0.08) |
+| 4 | Batanes | site | (0.42, 0.57) |
+| 5 | Subic Bay | base | (0.35, 0.70) |
+| 6 | Palawan | site | (0.28, 1.02) |
+| 7 | Guam | base | (0.90, 1.02) |
+| 8 | Camilo Osias | site | (0.45, 0.86) |
+| 9 | Kyogamisaki | site | (0.87, 0.00) |
+| 10 | Mujuk | site | (0.67, 0.036) |
 
-### 18 Connections (bidirectional, with travel time in days)
+### Connections (bidirectional, `[portA, portB, days]`)
 
 ```
-Yokosuka ↔ Sasebo (3d)       Yokosuka ↔ Okinawa (3d)      Yokosuka ↔ Guam (5d)
-Sasebo ↔ Okinawa (2d)
-Okinawa ↔ Miyako-jima (2d)   Okinawa ↔ Guam (4d)
-Miyako-jima ↔ Yonaguni (1d)  Miyako-jima ↔ Green Island (2d)
-Yonaguni ↔ Green Island (1d)
-Green Island ↔ Pratas (2d)   Green Island ↔ Batanes (2d)
-Pratas ↔ Subic Bay (3d)      Pratas ↔ Itu Aba (2d)
-Batanes ↔ Subic Bay (2d)
-Subic Bay ↔ Palawan (2d)     Subic Bay ↔ Itu Aba (3d)     Subic Bay ↔ Guam (5d)
-Palawan ↔ Itu Aba (2d)
+Yokosuka↔Sasebo (3)   Yokosuka↔Okinawa (4)   Yokosuka↔Guam (5)
+Sasebo↔Okinawa (2)    Sasebo↔Kunsan (1)
+Okinawa↔Kunsan (2)    Okinawa↔Guam (5)       Okinawa↔Batanes (2)
+Kunsan↔Batanes (3)    Kunsan↔Kyogamisaki (2) Kunsan↔Mujuk (1)
+Batanes↔Subic Bay (2) Batanes↔Camilo Osias (2)
+Subic Bay↔Palawan (2) Subic Bay↔Guam (3)     Subic Bay↔Camilo Osias (2)
+Mujuk↔Kyogamisaki (2)
 ```
 
-Data stored as `this.connections = [[portA, portB, days], ...]`.
-Helper methods: `getConnected(portIndex)` returns `[{ port, days }]`, `getTravelTime(from, to)` returns days or null.
+Helper methods: `getConnected(portIndex)` → `[{ port, days }]`, `getTravelTime(from, to)` → days or null.
 
 ### Base Inventories
 
-Each base has a fixed inventory object `{ supplyType: quantity }`. Inventories deplete as the player loads cargo and do not restock. Bases specialize to force multi-base routing:
-
-- **Guam**: Construction 50, Heavy 40, Shelter 30
-- **Sasebo**: Bridging 40, Construction 35, Heavy 25
-- **Yokosuka**: Power 40, Comms 35, Shelter 25
-- **Subic Bay**: Tools 35, Water 30, Construction 30
+Each base has an `inventory` object keyed by **cargo IDs** (`CARGO-XXX`). Inventories deplete when the player loads cargo and **restock randomly during travel** (see Port Resupply). Bases carry different mixes, e.g.:
+- **Yokosuka**: heavy on SATCOM (CARGO-034), TacComms (CARGO-033), Barracks (CARGO-004)
+- **Sasebo**: SheetPile (CARGO-013), Dozers (CARGO-001), Cranes (CARGO-006)
+- **Kunsan / Subic Bay**: Pipe (CARGO-008), Water (CARGO-028), TacComms (CARGO-033)
+- **Guam**: Barracks (CARGO-004), Drills (CARGO-027), Cranes (CARGO-006)
 
 ### Map Rendering
 
-- Background: loads `assets/google_earth.png` as canvas background; falls back to dark fill + animated sine-wave lines if image not loaded.
-- Edges: thin gray lines between all connected ports; dashed highlighted lines + travel time labels for edges connected to the current port.
-- Active travel edge: solid bright blue line between source and destination.
-- Port nodes: circles color-coded by type — blue (base), amber (site with active request), gray (site without request). Current port gets a white highlight ring.
-- Ship: white triangle drawn at the current port (offset 22px below) or interpolated along the travel edge based on `travelElapsed / (travelElapsed + travelDaysRemaining)`.
-- Ports use normalized coordinates `(nx, ny)` in 0–1 space, mapped to canvas pixels via `_toPixel()` with 48px padding.
+- **Background**: loads `assets/google_earth.png`, draws it scaled to canvas with a dark `rgba(10,22,40,0.75)` overlay. Falls back to dark fill + animated sine waves if the image hasn't loaded. The map caches `lastShipState`/`lastRequestPorts`/`lastContestedPorts` so it can re-render on image load and on resize.
+- **Edges**: thin gray lines between all connected ports. Edges from the current port are dashed and labeled with travel time — or labeled **"Blocked"** in red if the target is contested.
+- **Travel edge**: solid bright blue line during transit.
+- **Port nodes**: color-coded — blue (base), amber (site with active request), gray (idle site), **red (contested site)**. Current port has a white highlight ring. Bases show a "BASE" label; contested sites show a "CONTESTED" label.
+- **Ship**: white triangle at the current port (offset below) or interpolated along the travel edge by `travelElapsed / (travelElapsed + travelDaysRemaining)`.
+- Coordinates are normalized `(nx, ny)`, mapped via `_toPixel()` with 48px padding. Note some ports have `ny` slightly > 1.0 (drawn beyond nominal bounds).
 
 ---
 
-## Supply System (supply-data.js)
+## Supply System (data_master/supply-data.js)
 
-### 8 Supply Types
+### SUPPLY_TYPES — Keyed by Cargo ID
 
-```js
-const SUPPLY_TYPES = {
-  construction: { name: "Construction Material", short: "Constr" },
-  bridging:     { name: "Bridging & Fieldworks", short: "Bridge" },
-  power:        { name: "Power & Generators", short: "Power" },
-  comms:        { name: "Telecom Equipment", short: "Comms" },
-  tools:        { name: "Tools & Repair Kits", short: "Tools" },
-  water:        { name: "Water & Purification", short: "Water" },
-  shelter:      { name: "Modular Shelter", short: "Shelter" },
-  heavy:        { name: "Heavy Equipment", short: "HvyEq" },
-};
-```
+15 real cargo items, each with display name, short label, and physical dimensions (length_ft, width_ft, weight_lbs). Examples:
 
-All types weigh 1t per unit. The `short` name is used in compact UI displays.
+| Cargo ID | Short | Name |
+|----------|-------|------|
+| CARGO-001 | Dozer | Caterpillar D9 Bulldozers |
+| CARGO-004 | Barracks | ISO Containerized Field Barracks Units |
+| CARGO-006 | Crane | Liebherr LTM 1500 Mobile Cranes |
+| CARGO-008 | Pipe | Reinforced Concrete Pipe Sections |
+| CARGO-010 | Bridge | Prefabricated Steel Bridge Sections |
+| CARGO-013 | SheetPile | Steel Sheet Pile Sections (AZ-26) |
+| CARGO-019 | ROUnit | Containerized Reverse Osmosis Water Units |
+| CARGO-027 | Drill | Bauer BG 40 Rotary Drilling Rigs |
+| CARGO-028 | Water | Potable Water (palletized/bulk bladders) |
+| CARGO-029 | Food | Rationed Food Supplies (MREs/grain) |
+| CARGO-030 | Medical | Medical Supplies (field hospital kits) |
+| CARGO-031 | Fuel | Fuel (Diesel / JP-8 Bladders) |
+| CARGO-032 | Ammo | Ammunition Magazines |
+| CARGO-033 | TacComms | Mobile Tactical Communications Shelter |
+| CARGO-034 | SATCOM | Containerized SATCOM Terminal Unit |
 
-### 12 Request Templates
+### REQUEST_TEMPLATES
 
-Each template defines: `supplies` (object of type→quantity), `mission` (narrative string), `urgencyPool` (array of possible urgency levels). Templates cover real Seabee missions: airfield repair, water purification, bridge construction, SIGINT deployment, medical facilities, ammunition bunkers, etc.
+12 templates, each with `mission` (narrative), `supplies` ({ cargoId: quantity }), and `urgencyPool` (array of starting urgencies). Cover real Seabee missions: airfield repair, water purification, bridge construction, medical facilities, ammunition bunkers, SIGINT stations, coastal fortification, etc.
 
 ---
 
-## Request System (game.js)
+## Request & Escalation System (game.js)
 
 ### Request Object
 
 ```js
 {
   id: 1,
-  destination: 9,                // Port index (always a site, never a base)
-  destinationName: "Palawan",
-  supplies: { construction: 15, heavy: 10 },  // Original full request
-  remaining: { construction: 15, heavy: 10 },  // Decrements as deliveries happen
-  deadline: 22,                  // Day by which delivery must complete
-  urgency: "high",               // "high" | "medium" | "low"
+  destination: 4,                  // Port index (always a site)
+  destinationName: "Batanes",
+  supplies: { "CARGO-013": 35, "CARGO-001": 20 },  // Original full request
+  remaining: { "CARGO-013": 35, "CARGO-001": 20 }, // Decrements on delivery
+  stageDaysLeft: 6,                // Days left in current urgency stage
+  urgency: "high",                 // "low"|"medium"|"high"|"critical"|"contested"
   mission: "Airfield damage repair...",
-  status: "active",              // "active" | "fulfilled" | "expired"
+  status: "active",                // "active"|"contested"|"fulfilled"|"expired"
   createdDay: 1,
   fulfilledDay: null,
 }
 ```
 
-### Request Lifecycle
+### Escalation Ladder (the core tension mechanic)
 
-1. **Generation**: 3 at game start, then 1 every 7–10 days (max 5 active). Picks a random site without an active request, a random template, and sets deadline based on urgency (high: 12–18d, medium: 18–25d, low: 25–35d).
-2. **Partial delivery**: Player docks at the request destination, clicks "Deliver Available Cargo". Matching cargo types transfer from ship to request, decrementing `remaining`. Multiple trips are allowed.
-3. **Fulfillment**: When `remaining` is empty → `status = "fulfilled"`, scored as on-time or late.
-4. **Expiration**: Each tick checks `state.day > deadline` for active requests → `status = "expired"`, counted as failed.
-5. **No duplicate destinations**: Generator skips sites that already have an active request.
+Replaces fixed deadlines. Each day, `_checkDeadlines()` processes active/contested requests:
 
-### Quick Load
+1. **Active, non-critical**: `stageDaysLeft--`. When it hits 0, urgency escalates:
+   - `low` → `medium` (resets to 8 days)
+   - `medium` → `high` (resets to 6 days)
+   - `high` → `critical` (no timer; now rolls for contested)
+2. **Active, critical**: each day rolls a **20% chance** to become **contested**. On contest: `status="contested"`, `urgency="contested"`, `stageDaysLeft=12`, and `score.failed++` (counts as an incident).
+3. **Contested**: recovers over time. `stageDaysLeft -= recoverySpeed`, where `recoverySpeed = 1 + suppliedNeighborsCount`. A neighbor counts as "supplied" if it's a base, or a site with no active/contested request. When `stageDaysLeft <= 0`, the port is **secured**: `status="active"`, `urgency="high"`, `stageDaysLeft=8`.
 
-At a base, "Load for: [destination]" auto-loads exactly what a specific request needs (minus what the ship already carries), up to base stock and ship capacity.
+### Contested Ports Block Travel
+
+- `isPortContested(portIndex)` — true if any request there has status "contested".
+- `startTravel()` refuses to set course to a contested port (logs a warning).
+- The map draws contested ports/edges in red with "Blocked"/"CONTESTED" labels; nav buttons are disabled.
+- `getContestedPorts()` returns a Set of contested destination indices (passed to the map renderer).
+
+### Request Generation
+
+- 3 at game start, then 1 every 7–10 days (max 5 active+contested).
+- Picks a random site without an active/contested request, a random template, a random urgency from its pool.
+- Starting `stageDaysLeft` by urgency: low=10, medium=8, high=6.
 
 ---
 
 ## Cargo Operations (game.js)
 
-### Loading (at bases only)
-
 ```js
-loadCargo(type, amount)  // Transfers min(amount, baseStock, shipSpace) from base to ship
-unloadAll()              // Returns all cargo to current base's inventory
-quickLoad(requestId)     // Auto-loads for a specific request
+loadCargo(type, amount)  // Transfers min(amount, baseStock, shipSpace) base→ship (bases only)
+unloadAll()              // Returns all ship cargo to current base inventory
+quickLoad(requestId)     // Auto-loads exactly what a request still needs
+deliverCargo(requestId)  // Transfers matching cargo ship→request.remaining (partial OK)
 ```
 
-Ship cargo is `state.cargo = { type: quantity }`. Entries are deleted when quantity reaches 0.
-
-### Delivery (at sites with active requests)
-
-```js
-deliverCargo(requestId)  // Transfers matching cargo from ship to request.remaining
-```
-
-Partial deliveries are supported. On full completion, request flips to "fulfilled" and tonnage is added to score.
+Ship cargo is `state.cargo = { cargoId: quantity }`; entries are deleted at 0. On full request completion, status → "fulfilled", scored on-time (`day <= deadline`-equivalent) or late, tonnage added.
 
 ---
 
 ## Travel System (game.js)
 
-### Flow
-
-1. Player clicks a navigation button → `startTravel(targetPort)`
-2. State updates: `traveling=true, currentPort=null, travelFrom/To set, travelDaysRemaining = edge weight`
-3. Tick timer starts (900ms per tick = 1 day)
-4. Each `_doTick()`:
+1. Player clicks a nav button → `startTravel(targetPort)` (blocked if target contested).
+2. State: `traveling=true, currentPort=null, travelDaysRemaining = edge weight`.
+3. Tick timer: 900ms per tick = 1 day. Each `_doTick()`:
    - `day++`, `travelElapsed++`, `travelDaysRemaining--`
-   - Check request deadlines, maybe generate new request
-   - 20% chance of random event (modal interrupts travel)
-   - If `travelDaysRemaining <= 0`: arrive at destination, stop ticking, show docked UI
-   - If `day >= 60`: end game
-5. Events can modify `travelDaysRemaining` (delays add days, favorable conditions subtract)
+   - `_checkDeadlines()` (escalation), `_maybeGenerateRequest()`
+   - **20% chance** of a random event (modal interrupts travel)
+   - **50% chance** of port resupply (`shouldPortResupply()`)
+   - On arrival (`travelDaysRemaining <= 0`): dock, stop ticking
+   - At day 60: `_endGame()`
 
-### Travel is one-way committed
+### Port Resupply (new)
 
-Once the player clicks "Go", they cannot stop or redirect mid-transit. They arrive at the chosen port after the travel time (±event modifications).
+Each travel day, 50% chance: pick a random subset of bases, and for each, pick a random subset of its inventory materials and bump each to a new random value (current+1 .. current+50). Logged as "[Base] Resupplied!". This keeps bases stocked over the 60-day game.
 
 ---
 
@@ -236,26 +226,16 @@ Once the player clicks "Go", they cannot stop or redirect mid-transit. They arri
 
 ### Event Data (events-data.js)
 
-8 logistical complications. Each has `name`, `description`, and `choices` array. Each choice has `outcomes` with percentage chances.
-
-**Events**: Rough Seas, Engine Trouble, Navigation Hazard, Comms Blackout, Favorable Current, Cargo Lashing Failure, Shipping Traffic, Clear Weather Window.
+8 logistical complications, unchanged in structure: Rough Seas, Engine Trouble, Navigation Hazard, Comms Blackout, Favorable Current, Cargo Lashing Failure, Shipping Traffic, Clear Weather Window. Each has `name`, `description`, `choices[]`, and each choice has `outcomes[]` with `chance`, `preview`, `effects`, `message`.
 
 ### Event Effects
 
-Only two effect types:
-- `delay: N` — adds N to `travelDaysRemaining` (negative = speed boost). Clamped to ≥ 0.
-- `cargoLoss: N` — removes N units of a random cargo type the ship is carrying.
+- `delay: N` — adds N to `travelDaysRemaining` (negative = speed boost), clamped ≥ 0.
+- `cargoLoss: N` — removes N units of a random carried cargo type; `{lost}` placeholder in message resolves to the actual loss.
 
 ### Event Engine (events.js)
 
-- `resolveOutcome(choice)` — rolls 0–100, walks outcomes by cumulative chance
-- `applyEventOutcome(outcome, state)` — applies delay/cargoLoss, resolves `{lost}` placeholder in message
-- `shouldEventTrigger()` — `Math.random() < 0.20` (20% per travel day)
-- `getRandomEvent()` — random pick from `EVENT_CATALOG`
-
-### Event UI
-
-Modal with choice buttons + outcome preview badges. After choosing, shows result message + "Continue" button. Returns a Promise that resolves with the message string.
+`resolveOutcome(choice)`, `applyEventOutcome(outcome, state)`, `shouldEventTrigger()` (0.20), `shouldPortResupply()` (0.50), `getRandomEvent()`.
 
 ---
 
@@ -265,166 +245,83 @@ Modal with choice buttons + outcome preview badges. After choosing, shows result
 
 ```
 #app
-├── #header (title + day counter + score display)
+├── #header (title "L.A.V.A. – Littoral Asset & Vessel Allocation" + day counter + score)
 ├── #main
 │   ├── #map-area > canvas#map-canvas
 │   └── aside#sidebar (340px, scrollable)
-│       ├── #ship-status      — Location, cargo bar, cargo list
+│       ├── #ship-status      — Location, cargo bar, cargo manifest
 │       ├── #actions-panel    — Contextual: loading / delivery / navigation
-│       ├── #requests-panel   — Active request cards + recent history
+│       ├── #requests-panel   — Active/contested request cards + recent history
 │       └── #log              — Ops log (prepend-only, max 40 entries)
-└── #modal-overlay.hidden > #modal (for events + game over)
+└── #modal-overlay.hidden > #modal (events + game over)
 ```
 
 ### Sidebar Sections (ui.js)
 
-**Ship Status** (always visible):
-- Location text ("Docked at Guam" or "In transit → Palawan (2d remaining)")
-- Cargo capacity bar (visual + numeric)
-- Cargo manifest (list of type:quantity pairs)
+**Ship Status**: location text, cargo capacity bar (visual + numeric), cargo manifest by short label.
 
-**Actions Panel** (contextual, rebuilt via `_renderActions()`):
-- **At a base**: Supply loading grid (type, base stock, ship stock, +10/All buttons), unload button, quick-load buttons per request
-- **At a site with request**: Delivery breakdown (need/have/status per type), deliver button
-- **Navigation**: List of connected ports with travel time and badges (BASE / REQ)
-- **While traveling**: Panel is empty (no actions available)
+**Actions Panel** (contextual):
+- At a base: load grid (type, base stock, ship stock, **+5**/All buttons), unload-all, quick-load buttons per active request.
+- At a site with request: delivery breakdown (need/have/Ready-or-Short per type), deliver button.
+- Navigation: connected ports with travel time + badges (BASE / REQ / **CONTESTED**); contested targets are disabled and show "Blocked".
 
-**Requests Panel** (always visible):
-- Cards for each active request: destination, urgency badge (HIGH=red, MED=amber, LOW=blue), mission text, needed supplies, deadline with "days left" (turns red at ≤3)
-- Recent fulfilled/expired requests shown below
+**Requests Panel**: cards per active/contested request showing destination, urgency badge (CONTESTED/CRITICAL/HIGH=red, MEDIUM=amber, LOW=blue), mission, needed supplies (or "Communications lost" if contested), and stage info:
+- Contested → "Recovery ETA: Nd (-Xd/d)" showing recovery rate from supplied neighbors.
+- Critical → "Status: AT RISK (Rolls daily for Contested)".
+- Otherwise → "Deadline: Day N (Nd left)" (turns red at ≤3 days).
+Recent fulfilled/expired requests listed below.
 
-**Ops Log**: Color-coded entries (red=bad, green=good, gold=port events).
+### Modals
 
-### Event Modal
-
-Used only during travel events. Two-phase: choice buttons with outcome previews → result message with "Continue" button.
-
-### Game Over Modal
-
-Shows 60-Day Report: fulfilled/total, on-time/late/failed, total tonnage, fulfillment percentage. "Play Again" reloads the page.
+Event modal (two-phase: choices with previews → result + Continue). Game-over modal shows the 60-Day Report.
 
 ---
 
 ## Scoring
 
-The game runs for **60 days**. Score is tracked in `game.score`:
-
-| Metric | Description |
-|--------|-------------|
-| `fulfilled` | Requests completed (partial doesn't count) |
-| `failed` | Requests that expired |
-| `onTime` | Fulfilled before deadline |
-| `late` | Fulfilled after deadline |
-| `tonnageDelivered` | Total tons of supplies successfully delivered |
-| `totalRequests` | Total requests generated over the game |
-
-Fulfillment rate = `fulfilled / totalRequests * 100%`.
-
-At day 60, all remaining active requests are expired and the game over modal shows.
+60-day game. `game.score`: `fulfilled`, `failed` (expired + contested incidents), `onTime`, `late`, `tonnageDelivered`, `totalRequests`. Fulfillment rate = `fulfilled / totalRequests`. At day 60 all remaining active/contested requests expire; game-over modal shows the report.
 
 ---
 
 ## CSS Theme (style.css)
 
-Dark naval theme with CSS custom properties:
-
-| Variable | Value | Usage |
-|----------|-------|-------|
-| `--bg-dark` | `#0b1628` | Body background |
-| `--bg-panel` | `#122040` | Sidebar, modal |
-| `--accent` | `#4fc3f7` | Primary blue, bases |
-| `--danger` | `#ef5350` | Urgent requests, failures |
-| `--success` | `#66bb6a` | Deliveries, on-time |
-| `--gold` | `#ffd54f` | Request sites, medium urgency |
-| `--text-muted` | `#7a8ba0` | Secondary text |
-
-Layout: Flex column `#app` → header + `#main` (flex row: canvas + 340px sidebar). Sidebar sections separated by subtle borders. Request cards have colored left borders by urgency.
+Dark naval theme. Key vars: `--accent #4fc3f7` (bases/blue), `--danger #ef5350` (urgent/contested/failure), `--success #66bb6a` (deliveries), `--gold #ffd54f` (request sites/medium urgency), `--text-muted #7a8ba0`. Layout: flex column `#app` → header + `#main` (canvas + 340px sidebar). Request cards have urgency-colored left borders (`urg-contested`, `urg-high`, `urg-med`, `urg-low`).
 
 ---
 
-## Assets Directory
+## Reference Data (data_master/ — not integrated into gameplay)
 
-```
-assets/
-├── google_earth.png                 — Map background (satellite view, loaded by map.js)
-├── southeast_asia_location_map.png  — Reference map image
-├── fune.png                         — Ship illustration
-├── kaizokusen.png                   — Pirate ship illustration
-├── container_kontenasen.png         — Container ship illustration
-├── trade_container_close.png        — Container illustration
-├── trade_container_character_crane.png — Crane/container illustration
-├── taifuu_top.png / tenki_typhoon.png — Typhoon illustrations
-├── mark_tenki_kumori.png            — Cloudy weather
-├── sun_yellow1.png                  — Clear weather
-├── radar_denpa.png                  — Radar illustration
-├── ship_nanpasen.png                — Distressed ship
-├── gyosen_ship_fushinsen.png        — Suspicious vessel
-├── norimono_character2_fune.png     — Character on boat
-├── job_koujou_man.png               — Construction worker
-├── job_seibishi_woman.png           — Mechanic
-├── buidling_boueki_souko.png        — Warehouse
-└── computer_document_spreadsheet.png — Spreadsheet/planning
-```
+### ship_catalog.json — 10 US Navy Vessels
 
-These assets are available but only `google_earth.png` is currently used in code (map background). The rest could be used for event illustrations, UI embellishments, or port imagery.
+Fields: `ship_id`, `name`, `cargo_capacity_tons`, `weight_tons`, `max_speed_knots`, `fuel_capacity_tons`, `size.x` (LOA, m), `size.y` (beam, m). Ships: CVN-68 Nimitz, CVN-78 Ford, DDG-51 Burke, CG-52 Bunker Hill, LHD-1 Wasp, LHA-6 America, LPD-17 San Antonio, FFG-62 Constellation, AOE-6 Supply, T-AKE-1 Lewis and Clark. (Schema: `ship_data_description.txt`.)
 
----
+### cargo_data_schema.txt — Cargo Dictionary Schema
 
-## Reference Data (data_master/ — not yet integrated)
+Defines `cargo_id`, `general_label` (Heavy Equipment / Heavy Lift / Construction Material / Modular Structure / Vehicle), `cargo` (full name), `dimensions.{length_ft, width_ft, weight_lbs}`. The in-game `SUPPLY_TYPES` is derived from this catalog.
 
-### ships_updated.json — 10 US Navy Vessels
+### typhoon.json — Maritime Weather Resistance Grid (~327KB)
 
-| Field | Type | Example |
-|-------|------|---------|
-| `ship_id` | string | "CVN-68" |
-| `name` | string | "USS Nimitz" |
-| `cargo_capacity_tons` | number | 15000 |
-| `weight_tons` | number | 100000 |
-| `max_speed_knots` | number | 30 |
-| `fuel_capacity_tons` | number | 9000 |
-| `size.x` (length, meters) | number | 333 |
-| `size.y` (beam, meters) | number | 41 |
-
-Ships: CVN-68 Nimitz, CVN-78 Ford, DDG-51 Burke, CG-52 Bunker Hill, LHD-1 Wasp, LHA-6 America, LPD-17 San Antonio, FFG-62 Constellation, AOE-6 Supply (USNS), T-AKE-1 Lewis and Clark (USNS).
-
-### cargo.json — 27 Military/Construction Cargo Items
-
-| Field | Type | Example |
-|-------|------|---------|
-| `cargo_id` | string | "CARGO-001" |
-| `general_label` | string | "Heavy Equipment" |
-| `cargo` | string | "Caterpillar D9 Bulldozers" |
-| `dimensions.length_ft` | float | 17.5 |
-| `dimensions.width_ft` | float | 14.0 |
-| `dimensions.weight_lbs` | int | 114000 |
-
-Categories: Heavy Equipment, Heavy Lift, Construction Material, Modular Structure, Vehicle. Includes mission-relevant items like ROWPU units (CARGO-019), bulldozers (CARGO-001), cold milling machines (CARGO-018), cranes (CARGO-005/006/024).
+A 50×50 spatial grid (x: 100°E–125°E, y: 0°N–25°N) of sailing-resistance values (0.0 free → 1.0 impassable) across 18 time frames (Δt=10s). Structure: `{ "cells": { "x_y": [r0..r17] } }`. The `typhoon` scenario models an eye entering the east edge tracking WNW with a violent eyewall (~0.96 resistance). Sibling scenarios described in `weather_data_description.txt`: squall, borneo_vortex, itcz, hectic. Resistance = 1 − (wave_penalty × windage_penalty). Not yet wired into gameplay.
 
 ---
 
 ## Key Design Patterns
 
-1. **Graph-based navigation**: Free-roaming port graph replaces linear route. Player picks next destination from connected ports. Travel time = edge weight in days.
-
-2. **Request-driven gameplay**: No fixed missions. Requests generate dynamically with random sites, supply mixes, urgencies, and deadlines. The player decides prioritization.
-
-3. **No economy**: No currency, no health, no spending. Bases give supplies for free. The only constraints are cargo capacity (100t) and time (60 days, plus per-request deadlines).
-
-4. **Sidebar-driven interaction**: All player actions happen in the sidebar (loading, delivering, navigating). The map is display-only. Modals are used only for travel events and game over.
-
-5. **Data-driven events**: Event effects are simple objects `{ delay: N, cargoLoss: N }` — the engine interprets them generically. Add new events by adding objects to `EVENT_DATA`.
-
-6. **Partial deliveries**: Requests track `remaining` supplies separately from the original `supplies`. Multiple trips to the same site are supported. Fulfillment only triggers when `remaining` is fully emptied.
-
-7. **Mutable port inventories**: Base `inventory` objects are mutated in place when cargo is loaded or unloaded. Inventories do not restock during the game — strategic depletion matters.
+1. **Graph-based navigation**: free-roaming port graph; travel time = edge weight in days. Contested ports block routes.
+2. **Request escalation as the clock**: instead of static deadlines, requests climb low→medium→high→critical, then risk becoming contested. Contested ports lock out delivery until recovered.
+3. **Recovery via network control**: a contested port recovers faster (`1 + suppliedNeighbors` per day) when its neighbors are bases or unburdened sites — rewards keeping the surrounding network healthy.
+4. **No economy**: no currency/health/spending. Constraints are cargo capacity (100t) and time (60 days + escalation pressure).
+5. **Self-replenishing bases**: 50%/day resupply keeps inventories from running dry over a long game.
+6. **Cargo-ID data model**: supplies are keyed by real cargo catalog IDs with physical dimensions, shared between `SUPPLY_TYPES`, base inventories, and request templates.
+7. **Data-driven events**: simple `{ delay, cargoLoss }` effects interpreted generically; extend by adding to `EVENT_DATA`.
+8. **Sidebar-driven interaction**: all actions happen in the sidebar; the canvas map is display-only; modals only for travel events and game over.
 
 ---
 
 ## Game Balance
 
-- **60-day game**, 3 starting requests + ~7 more over the game (~10 total)
-- **100t cargo capacity** vs requests needing 15–25t each → 4–6 requests per full load
-- **Travel times**: 1–5 days per edge. Round trips to far sites (e.g. Guam → Palawan → Guam) take 14+ days
-- **Request deadlines**: HIGH 12–18d, MEDIUM 18–25d, LOW 25–35d
-- **Events**: 20% chance per travel day, mostly 1-day delays. Occasional cargo loss (2–5t) or speed boost (-1 to -2 days)
-- **Base specialization**: No single base has everything. Multi-supply requests force visiting 2+ bases or making tradeoffs
+- 60-day game, 3 starting requests + ~7 more (~10 total).
+- 100t capacity vs requests needing ~25–115t total → some large requests need multiple trips.
+- Travel times 1–5 days; corner-to-corner runs take many days, pressuring prioritization.
+- Escalation: low(10d)→medium(8d)→high(6d)→critical→20%/day contested. Contested recovery 12d base, faster with healthy neighbors.
+- Events 20%/travel-day (mostly ±1 day, occasional cargo loss). Base resupply 50%/travel-day.
