@@ -291,21 +291,28 @@ class UI {
     // Add travel-modal class to position in top-left
     this.els.overlay.classList.add("travel-modal");
 
-    let portDetailsHtml;
+    let portDetailsHtml = "";
     let detailsLines = [];
-    if (port.wpi?.harborType) detailsLines.push(`Harbor Type: ${port.wpi.harborType}`);
-    if (port.wpi?.harborSize) detailsLines.push(`Harbor Size: ${port.wpi.harborSize}`);
-    if (port.wpi?.channelDepthM) detailsLines.push(`Channel Depth: ${port.wpi.channelDepthM} M`);
-    if (port.wpi?.anchorageDepthM) detailsLines.push(`Anchorage Depth: ${port.wpi.anchorageDepthM} M`);
-    
-    portDetailsHtml = detailsLines.length > 0 
-      ? `<div class="travel-section"><strong>Port Details:</strong> ${detailsLines.join("<br/>")}</div>`
-      : "";
 
-    let inventoryHtml;
+    // port details 
+    if (isContested || isStorm) {
+      portDetailsHtml = `<div class="travel-section"><strong>Port Details:</strong> Comms Blackout: Unable to see port details at this moment.</div>`;
+    } else {
+      if (port.wpi?.harborType) detailsLines.push(`Harbor Type: ${port.wpi.harborType}`);
+      if (port.wpi?.harborSize) detailsLines.push(`Harbor Size: ${port.wpi.harborSize}`);
+      if (port.wpi?.channelDepthM) detailsLines.push(`Channel Depth: ${port.wpi.channelDepthM} M`);
+      if (port.wpi?.anchorageDepthM) detailsLines.push(`Anchorage Depth: ${port.wpi.anchorageDepthM} M`);
+      
+      portDetailsHtml = detailsLines.length > 0 
+        ? `<div class="travel-section"><strong>Port Details:</strong> ${detailsLines.join("<br/>")}</div>`
+        : "";
+    }
+
+    // inventory details 
+    let inventoryHtml = "";
     if (isContested) {
       inventoryHtml = `<div class="travel-section"><strong>Available inventory:</strong> Comms Blackout: Unable to see inventory at this moment.</div>`;
-    } else {
+    } else if (port.type === "base") {
       inventoryHtml = inventory && Object.keys(inventory).length
         ? `<div class="travel-section"><strong>Available inventory:</strong> ${Object.entries(inventory)
             .filter(([, amt]) => amt > 0)
@@ -313,7 +320,11 @@ class UI {
             .join(", ")}</div>`
         : "<div class=\"travel-section\"><strong>Available inventory:</strong> None</div>";
     }
-    const requestHtml = requests && requests.length
+
+    // requests 
+    let requestHtml = "";
+    if  (port.type === 'site') {
+      requestHtml = requests && requests.length
       ? `<div class="travel-section"><strong>Requests at destination:</strong>${requests.map(req => {
           const urgencyLabel = req.status === "contested"
             ? "CONTESTED"
@@ -329,13 +340,17 @@ class UI {
             `</div>`;
         }).join("")}</div>`
       : "<div class=\"travel-section\"><strong>Requests at destination:</strong> None</div>";
+    
+    }
 
+    console.log(requestHtml)
     this.els.modalBody.innerHTML =
       `${(isNeighbor && !isContested && !isCurrentPort) ? `<div class="travel-summary">Set sail to ${port.name}? Estimated travel time: ${daysLabel}.</div>` : ""}` +
       `${portDetailsHtml}` +
       `${inventoryHtml}` +
       `${requestHtml}`;
 
+      
     this.els.modalChoices.innerHTML = "";
 
     if (isNeighbor && !isContested && !isStorm && !isCurrentPort) {
