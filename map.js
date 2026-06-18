@@ -9,7 +9,7 @@ class GameMap {
     this.bgImage.onload = () => {
       this.bgLoaded = true;
       if (this.lastShipState && this.lastRequestPorts) {
-        this.render(this.lastShipState, this.lastRequestPorts, this.lastContestedPorts);
+        this.render(this.lastShipState, this.lastRequestPorts, this.lastContestedPorts, this.lastWeatherBlockedRoutes);
       }
     };
 
@@ -18,25 +18,30 @@ class GameMap {
     // lat/lon and WPI data. Array order is significant — `connections` indexes into it.
     this.ports = PORTS;
 
+
     this.connections = [
-      [0, 1, 3], [0, 2, 4],
-      [1, 2, 2],
+      [1, 2, 2], [1, 0, 2],
       [2, 3, 2], [2, 7, 5],
       [4, 5, 2],
       [5, 6, 2],
       [4, 7, 5],
       [4, 2, 2],
       [1, 3, 1],
-      [8, 4, 2], [8, 5, 2],
-      [9, 3, 2],
-      [10, 3, 1], [10, 9, 2],
-      [3, 4, 3],
+      [8, 5, 2],
       [8, 7, 3],
-      [0, 7, 5]
+      [0, 7, 5],
+      [5, 9, 1],
+      [10, 6, 2], [10, 5, 2],
+      [11, 4, 1], [11, 3, 3], [11, 2, 1],
+      [14, 4, 1], [14, 2, 2],
+      [13, 4, 1], [13, 8, 1],
+      [12, 10, 2], [12, 5, 1],
     ];
 
     this._resize();
     window.addEventListener("resize", () => this._resize());
+    this.canvas.addEventListener("mousemove", (e) => this._handleCanvasMouseMove(e));
+    this.canvas.addEventListener("click", (e) => this._handleCanvasClick(e));
   }
 
   _resize() {
@@ -44,7 +49,7 @@ class GameMap {
     this.canvas.width  = rect.width;
     this.canvas.height = rect.height;
     if (this.lastShipState && this.lastRequestPorts) {
-      this.render(this.lastShipState, this.lastRequestPorts, this.lastContestedPorts);
+      this.render(this.lastShipState, this.lastRequestPorts, this.lastContestedPorts, this.lastWeatherBlockedRoutes);
     }
   }
 
@@ -72,10 +77,11 @@ class GameMap {
     return null;
   }
 
-  render(shipState, requestPorts, contestedPorts) {
+  render(shipState, requestPorts, contestedPorts, weatherBlockedRoutes) {
     this.lastShipState = shipState;
     this.lastRequestPorts = requestPorts;
     this.lastContestedPorts = contestedPorts;
+    this.lastWeatherBlockedRoutes = weatherBlockedRoutes;
 
     const { ctx, canvas } = this;
     if (this.bgLoaded) {
@@ -91,9 +97,11 @@ class GameMap {
     for (const [a, b] of this.connections) {
       const pa = this._toPixel(this.ports[a].nx, this.ports[a].ny);
       const pb = this._toPixel(this.ports[b].nx, this.ports[b].ny);
+      const routeKey = `${Math.min(a, b)}-${Math.max(a, b)}`;
+      const isWeatherBlocked = weatherBlockedRoutes && weatherBlockedRoutes.has(routeKey);
       ctx.beginPath();
-      ctx.strokeStyle = "rgba(79,195,247,0.12)";
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = isWeatherBlocked ? "rgba(255,152,0,0.25)" : "rgba(79,195,247,0.12)";
+      ctx.lineWidth = isWeatherBlocked ? 2 : 1;
       ctx.moveTo(pa.x, pa.y);
       ctx.lineTo(pb.x, pb.y);
       ctx.stroke();
@@ -104,9 +112,14 @@ class GameMap {
       for (const { port: idx, days } of connected) {
         const pa = this._toPixel(this.ports[shipState.currentPort].nx, this.ports[shipState.currentPort].ny);
         const pb = this._toPixel(this.ports[idx].nx, this.ports[idx].ny);
+        const routeKey = `${Math.min(shipState.currentPort, idx)}-${Math.max(shipState.currentPort, idx)}`;
         const isTargetContested = contestedPorts && contestedPorts.has(idx);
+        const isStormBlocked = weatherBlockedRoutes && weatherBlockedRoutes.has(routeKey);
+        const lineColor = isTargetContested ? "rgba(239,83,80,0.45)" : isStormBlocked ? "rgba(255,152,0,0.55)" : "rgba(79,195,247,0.35)";
+        const labelColor = isTargetContested ? "#ef5350" : isStormBlocked ? "#ff9800" : "#7a8ba0";
+        const labelText = isTargetContested ? "Blocked" : isStormBlocked ? "Storm" : `${days}d`;
         ctx.beginPath();
-        ctx.strokeStyle = isTargetContested ? "rgba(239,83,80,0.45)" : "rgba(79,195,247,0.35)";
+        ctx.strokeStyle = lineColor;
         ctx.lineWidth = 2;
         ctx.setLineDash([6, 4]);
         ctx.moveTo(pa.x, pa.y);
@@ -114,10 +127,10 @@ class GameMap {
         ctx.stroke();
         ctx.setLineDash([]);
         const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
-        ctx.fillStyle = isTargetContested ? "#ef5350" : "#7a8ba0";
+        ctx.fillStyle = labelColor;
         ctx.font = "10px 'Segoe UI', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(isTargetContested ? "Blocked" : `${days}d`, mx, my - 5);
+        ctx.fillText(labelText, mx, my - 5);
       }
     }
 
@@ -234,4 +247,81 @@ class GameMap {
     ctx.fill();
     ctx.restore();
   }
+
+  _handleCanvasClick(event) {
+    const rect = this.canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    const portStatuses = this.ports.map((port, idx) => ({
+      name: port.name,
+      contested: typeof game !== 'undefined' ? game.isPortContested(idx) : false,
+    }));
+
+    for (let i = 0; i < this.ports.length; i++) {
+      const port = this.ports[i];
+      const p = this._toPixel(port.nx, port.ny);
+      const radius = port.type === "base" ? 15 : 12;
+
+      if (Math.hypot(clickX - p.x, clickY - p.y) <= radius) {
+        this._onPortClick(port, i);
+        break;
+      }
+    }
+  }
+
+  _handleCanvasMouseMove(event) {
+    const rect = this.canvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    let hoveringPort = false;
+
+    for (let i = 0; i < this.ports.length; i++) {
+      const p = this._toPixel(this.ports[i].nx, this.ports[i].ny);
+      const radius = this.ports[i].type === "base" ? 15 : 12;
+      
+      if (Math.hypot(mouseX - p.x, mouseY - p.y) <= radius) {
+        hoveringPort = true;
+        break;
+      }
+    }
+    this.canvas.style.cursor = hoveringPort ? "pointer" : "default";
+  }
+
+ _onPortClick(port, index) {
+    console.log(`Clicked map port: ${port.name} (Index: ${index})`);
+
+    if (this.lastShipState.traveling) {
+      game.ui.showToast("Ship is in transit. Cannot navigate right now.", "warning");
+      return;
+    }
+
+    if (typeof game !== 'undefined') {
+      const isContested = game.isPortContested(index);
+      const neighbors = this.getConnected(this.lastShipState.currentPort);
+      const isNeighbor = neighbors.some(n => n.port === index);
+      const isCurrentPort = this.lastShipState.currentPort === index;
+      const travelDays = this.getTravelTime(this.lastShipState.currentPort, index);
+      const targetInventory = port.type === "base" ? port.inventory : null;
+      const requestsAtPort = game.requests.filter(r =>
+        (r.status === "active" || r.status === "contested") && r.destination === index
+      );
+      const isStorm = !isContested && game.isRouteWeatherBlocked(this.lastShipState.currentPort, index);
+      
+      game.ui.showTravelConfirm({
+        port,
+        days: travelDays,
+        inventory: targetInventory,
+        requests: requestsAtPort,
+        isContested,
+        isNeighbor,
+        isCurrentPort,
+        isStorm,
+        onConfirm: () => game.startTravel(index),
+      });
+    } else {
+      console.error("Game instance 'game' not found globally.");
+    }
+  }
+
 }

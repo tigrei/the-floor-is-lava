@@ -1,0 +1,89 @@
+MARITIME WEATHER RESISTANCE FIELDS — DATA DESCRIPTION
+======================================================
+
+FILES
+  typhoon_large.json   typhoon_small.json   twin_typhoons.json
+  typhoon_squall.json  squall_line.json     scattered_cells.json
+  borneo_vortex.json   itcz_trough.json     triple_typhoon.json
+  hectic.json
+
+  svgs/  — 180 transparent SVG overlays (one per scenario per time point)
+
+STRUCTURE
+  {
+    "frames": {
+      "0":   { "svg": "svgs/typhoon_large_000s.svg", "matrix": [[r, r, ...], ...] },
+      "10":  { "svg": "svgs/typhoon_large_010s.svg", "matrix": [[r, r, ...], ...] },
+      ...
+      "170": { "svg": "svgs/typhoon_large_170s.svg", "matrix": [[r, r, ...], ...] }
+    }
+  }
+
+  matrix   50×50 array. matrix[y][x] = resistance at that cell.
+  x        0–49   west → east   (100°E – 125°E)
+  y        0–49   south → north (0°N   – 25°N)  row 0 = southernmost
+  r        0.0–1.0 resistance
+             0.0 = free sailing
+             1.0 = impassable
+
+  18 frames, Δt = 10 s, total span = 0–170 s (≈ 3 minutes)
+
+LOOKUP
+  const r = data.frames["90"].matrix[y][x];   // JS
+  r = data["frames"]["90"]["matrix"][y][x]    # Python
+
+SVG OVERLAYS
+  One SVG per scenario per time point. Transparent background, arrows only.
+  viewBox="0 0 1000 1000" with pad=48 — coordinate system matches GameMap._toPixel().
+  Overlay directly on canvas: ctx.drawImage(svgImg, 0, 0, canvas.width, canvas.height)
+
+  Arrow encoding:
+    Direction  — current direction
+    Length     — resistance (short = calm, long = high resistance)
+    Colour     — white = low resistance, black = high resistance
+
+SCENARIOS
+  typhoon_large    Large typhoon entering east edge (~125°E, 14°N), tracking WNW
+                      toward Vietnam. Wide eyewall (5° radius), 52 m/s peak winds.
+                      Intensifies as it crosses warm SCS waters. Resistance 0–0.96.
+
+  typhoon_small    Small intense typhoon, same WNW track. Tight eye (1.8° radius),
+                      60 m/s peak. Rapid intensification. Very localised danger zone.
+
+  twin_typhoons    Two simultaneous typhoons: large one north (18°N), small intense
+                      one south (8°N). Both track WNW. Dual danger zones.
+
+  typhoon_squall   Typhoon in the east + isolated convective squall cell in SW
+                      (Strait of Malacca). Two separate high-resistance zones.
+
+  squall_line      Six convective cells along a NW-SE diagonal, each peaking at a
+                      different time (staggered 25 s apart). Resistance max ~0.60.
+
+  scattered_cells  Five isolated convective cells at random positions across the
+                      basin, each with its own lifecycle peak. Calm surrounding ocean.
+
+  borneo_vortex    Quasi-stationary vortex off NW Borneo under NE monsoon cold
+                      surge. Broad moderate resistance (0.27–0.95), slowly intensifying.
+
+  itcz_trough      ITCZ/MJO monsoon trough migrating north (5°N → 10°N) over 3
+                      minutes. Resistance band sweeps northward. Calm on flanks.
+
+  triple_typhoon   Three typhoons simultaneously: forming (east, ramping up),
+                      peak intensity (centre), dissipating (west, weakening).
+
+  hectic           All systems active at once: typhoon remnant, ITCZ trough,
+                      Borneo vortex, two squall cells, turbulent noise.
+                      Resistance 0.40–0.96 everywhere, no safe corridor.
+
+PHYSICS
+  Resistance = 1 − (wave_penalty × windage_penalty)
+
+  wave_penalty     DNV-GL voluntary speed reduction from significant wave height Hₛ
+                   and encounter angle (head / beam / following sea).
+                   Hₛ from JONSWAP spectrum (fully-developed sea cap applied).
+                   SW Indian Ocean swell (14 s period, ~225° direction) superposed
+                   independently and propagates NE across the grid over time.
+
+  windage_penalty  Aerodynamic drag on 800 m² superstructure at 6 m/s design speed.
+
+  No bathymetry. No land mask. Pure weather forcing across full 50×50 ocean grid.
