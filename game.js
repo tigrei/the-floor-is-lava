@@ -119,7 +119,7 @@ class Game {
 
           // Generate random integer greater than existing value
           const min = currentValue + 1;
-          const max = currentValue + 100;
+          const max = currentValue + 50;
           const newValue = Math.floor(Math.random() * (max - min + 1)) + min;
           base.inventory[material] = newValue
         })
@@ -229,8 +229,8 @@ class Game {
       if (neighborPort.type === "base") {
         count++;
       } else {
-        const hasActiveOrContested = this.requests.some(r => 
-          r.destination === conn.port && 
+        const hasActiveOrContested = this.requests.some(r =>
+          r.destination === conn.port &&
           (r.status === "active" || r.status === "contested")
         );
         if (!hasActiveOrContested) {
