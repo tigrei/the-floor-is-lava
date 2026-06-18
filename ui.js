@@ -18,6 +18,9 @@ class UI {
       if (!button || button.disabled) return;
       this.game.holdPosition();
     });
+
+    const helpBtn = document.getElementById("help-btn");
+    if (helpBtn) helpBtn.addEventListener("click", () => this.showHelp());
   }
 
   renderSidebar() {
@@ -191,11 +194,38 @@ class UI {
         ? `Recovery ETA: ${req.stageDaysLeft} days (-${1 + this.game._getSuppliedNeighborsCount(req.destination)}d/d)`
         : (req.urgency === "critical" ? `Status: AT RISK (Rolls daily for Contested)` : `Escalates in ${req.stageDaysLeft} day(s)`);
 
+      // Readiness: can the cargo aboard fulfill this? If short, point to the best base.
+      let readyHtml = "";
+      if (!isCont) {
+        const cargo = this.game.state.cargo;
+        const covered = Object.entries(req.remaining).every(([t, n]) => (cargo[t] || 0) >= n);
+        if (covered) {
+          readyHtml = `<div class="req-ready ok">✓ Cargo aboard covers this — sail &amp; deliver</div>`;
+        } else {
+          // Best source = base that can supply the most of what's still missing.
+          let best = null, bestScore = 0;
+          for (const base of this.game.map.ports) {
+            if (base.type !== "base") continue;
+            let score = 0;
+            for (const [t, n] of Object.entries(req.remaining)) {
+              const stillNeed = Math.max(0, n - (cargo[t] || 0));
+              score += Math.min(base.inventory[t] || 0, stillNeed);
+            }
+            if (score > bestScore) { bestScore = score; best = base; }
+          }
+          const carryingSome = Object.entries(req.remaining).some(([t, n]) => (cargo[t] || 0) > 0);
+          const lead = carryingSome ? "◐ Carrying some" : "Load needed";
+          const source = best ? ` — best source: <b>${best.name}</b>` : "";
+          readyHtml = `<div class="req-ready partial">${lead}${source}</div>`;
+        }
+      }
+
       html += `<div class="request-card ${urgClass}">` +
         `<div class="req-header"><span class="req-dest">${req.destinationName}</span>` +
         `<span class="req-urgency">${badgeText}</span></div>` +
         `<div class="req-mission">${req.mission}</div>` +
         `<div class="req-supplies">${isCont ? "" : "Needs: "}${supplyList}</div>` +
+        readyHtml +
         `<div class="req-deadline ${!isCont && req.stageDaysLeft <= 3 ? "deadline-urgent" : ""}">${deadlineText}</div>` +
         `</div>`;
     }
@@ -408,6 +438,29 @@ class UI {
     const btn = document.createElement("button");
     btn.textContent = "Play Again";
     btn.addEventListener("click", () => { this.hideModal(); window.location.reload(); });
+    this.els.modalChoices.appendChild(btn);
+    this.els.overlay.classList.remove("hidden");
+  }
+
+  showHelp() {
+    this.els.overlay.classList.remove("travel-modal");
+    this.els.modalTitle.textContent = "How to Play";
+    this.els.modalBody.innerHTML =
+      `<div style="text-align:left; font-size:0.85rem; line-height:1.5;">` +
+      `<p style="margin-bottom:8px;"><b style="color:var(--accent);">Goal:</b> deliver as much requested cargo to sites as you can before <b>Day 60</b>.</p>` +
+      `<ul style="margin-left:16px; list-style-type:square; line-height:1.5;">` +
+      `<li><b>Move:</b> <b>click a port on the map</b> to open it, then press <b>Travel</b>. Sailing takes days.</li>` +
+      `<li><b>Load:</b> dock at a <span style="color:var(--accent);">Base</span> and use <b>+5 / All</b> in the Actions panel. <b>Load for: …</b> auto-loads a request.</li>` +
+      `<li><b>Deliver:</b> sail to a <span style="color:var(--gold);">Site</span> with an active request and press <b>Deliver</b>.</li>` +
+      `<li><b>Weather:</b> storms can block lanes (orange). When every lane is blocked, press <b>Hold Position</b> (top of Ship Status) to wait out the storm.</li>` +
+      `<li><b>Deadlines:</b> requests escalate if ignored — <span style="color:var(--gold);">MED</span> → <span style="color:var(--danger);">HIGH</span> → <b>CRITICAL</b> → <b>CONTESTED</b> (lanes cut until neighbors recover it).</li>` +
+      `</ul>` +
+      `<p style="margin-top:10px; color:var(--text-muted);">Tip: keep an eye on <b>Day x / 60</b> and the <b>Active Requests</b> deadlines, and pre-load cargo before a storm strands you.</p>` +
+      `</div>`;
+    this.els.modalChoices.innerHTML = "";
+    const btn = document.createElement("button");
+    btn.textContent = "Got it";
+    btn.addEventListener("click", () => this.hideModal());
     this.els.modalChoices.appendChild(btn);
     this.els.overlay.classList.remove("hidden");
   }

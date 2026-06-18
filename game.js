@@ -493,7 +493,9 @@ class Game {
   _render() {
     this.map.render(this.state, this.getRequestPorts(), this.getContestedPorts(), this.getWeatherBlockedRoutes());
     this._updateWeatherOverlay();
-    document.getElementById("day-counter").textContent = `Day ${this.state.day}`;
+    const dayEl = document.getElementById("day-counter");
+    dayEl.textContent = `Day ${this.state.day} / 60`;
+    dayEl.classList.toggle("day-urgent", this.state.day >= 50);
     document.getElementById("score-display").innerHTML = `Delivered: ${this.score.fulfilled}&ensp;<span class="failed-section">Failed: ${this.score.failed}</span>`;
   }
 
