@@ -35,6 +35,16 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 
 /* Ship Status */
 .ship-location { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 8px; }
+.weather-status { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; padding: 5px 8px; margin-bottom: 8px; background: rgba(79,195,247,0.06); border-left: 2px solid #ff9800; border-radius: 3px; }
+.weather-label { color: var(--text); font-weight: 600; }
+.weather-blocked { color: #ff9800; font-weight: 600; }
+.weather-clear { color: var(--text-muted); }
+.sea-state { font-weight: 600; }
+.sea-calm { color: #4fc3f7; }
+.sea-light { color: #81c784; }
+.sea-choppy { color: #ffd54f; }
+.sea-rough { color: #ff9800; }
+.sea-impassable { color: var(--danger); }
 .cargo-bar { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 3px; }
 .cargo-bar-visual { height: 6px; background: rgba(79,195,247,0.1); border-radius: 3px; margin-bottom: 8px; }
 .cargo-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; }
@@ -166,6 +176,11 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
   background: rgba(239, 83, 80, 0.25);
   color: var(--danger);
   border: 1px solid var(--danger);
+}
+.nav-badge.storm {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ff9800;
+  border: 1px solid #ff9800;
 }
 .btn-nav:disabled {
   opacity: 0.4;
