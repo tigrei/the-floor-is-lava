@@ -128,17 +128,31 @@ class UI {
     // Loading section (base)
     if (port.type === "base") {
       html += `<div class="action-section"><div class="section-label">LOAD SUPPLIES</div>`;
+      
+      // --- FIXED HEADER ROW (Strict Flex Alignment) ---
+      html += `<div class="load-row load-header" style="display: flex; align-items: center; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 8px; padding-bottom: 5px;">` +
+        `<span class="load-name" style="flex: 2; text-align: left;">Item</span>` +
+        `<span class="load-stock" style="flex: 1; text-align: center;">Base</span>` +
+        `<span class="load-ship" style="flex: 1; text-align: center;">Ship</span>` +
+        `<span class="load-actions" style="flex: 2; text-align: right; padding-right: 5px;">Actions</span>` +
+        `</div>`;
+      // ------------------------------------------------
+
       const types = Object.keys(SUPPLY_TYPES);
       for (const type of types) {
         const stock = port.inventory[type] || 0;
         const shipHas = state.cargo[type] || 0;
-        html += `<div class="load-row">` +
-          `<span class="load-name">${type}</span>` +
-          `<span class="load-stock">${stock}t</span>` +
-          `<span class="load-ship">${shipHas}t</span>` +
+        
+        // --- FIXED DATA ROW (Matching Flex Alignment) ---
+        html += `<div class="load-row" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">` +
+          `<span class="load-name" style="flex: 2; text-align: left;">${type}</span>` +
+          `<span class="load-stock" style="flex: 1; text-align: center;">${stock}t</span>` +
+          `<span class="load-ship" style="flex: 1; text-align: center;">${shipHas}t</span>` +
+          `<div class="load-actions" style="flex: 2; text-align: right;">` +
           `<button class="btn-sm" onclick="game.unloadCargo('${type}',5)">-5</button>` +
           `<button class="btn-sm" onclick="game.loadCargo('${type}',5)">+5</button>` +
-          `<button class="btn-sm" onclick="game.loadCargo('${type}',999)">All</button>` +
+          `<button class="btn-sm" style="margin-left: 4px;" onclick="game.loadCargo('${type}',999)">All</button>` +
+          `</div>` +
           `</div>`;
       }
       html += `<button class="btn-action btn-unload" onclick="game.unloadAll()">Unload All Cargo</button>`;
