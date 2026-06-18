@@ -19,7 +19,14 @@ class UI {
       this.game.holdPosition();
     });
 
-    this.filterSupplies = false;
+    this.filterResources = false;
+
+    this.els.actionsPanel.addEventListener("click", (event) => {
+      const button = event.target.closest('#filter-btn');
+      if(!button) return;
+      this.filterResources = !this.filterResources;
+      this._renderActions();
+    });
   }
 
   renderSidebar() {
@@ -83,7 +90,6 @@ class UI {
   }
 
   _renderActions() {
-    const self = this;
     const state = this.game.state;
     if (state.traveling || state.gameOver) {
       this.els.actionsPanel.innerHTML = "";
@@ -111,7 +117,7 @@ class UI {
     const reqs = this.game.getRequestsAtPort(state.currentPort);
     if (reqs.length > 0) {
       for (const req of reqs) {
-        html += `<div class="action-section"><div class="section-label" style="display: inline-block">DELIVERY: ${req.mission}</div>`;
+        html += `<div class="action-section"><div class="section-label">DELIVERY: ${req.mission}</div>`;
         html += `<div class="delivery-grid">`;
         for (const [type, needed] of Object.entries(req.remaining)) {
           const have = state.cargo[type] || 0;
@@ -130,21 +136,14 @@ class UI {
 
     // Loading section (base)
     if (port.type === "base") {
-      html += `<div class="action-section"><div class="section-label">LOAD SUPPLIES</div>`;
-      
-      // --- FIXED HEADER ROW (Strict Flex Alignment) ---
-      html += `<div class="load-row load-header" style="display: flex; align-items: center; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 8px; padding-bottom: 5px;">` +
-        `<span class="load-name" style="flex: 2; text-align: left;">Item</span>` +
-        `<span class="load-stock" style="flex: 1; text-align: center;">Base</span>` +
-        `<span class="load-ship" style="flex: 1; text-align: center;">Ship</span>` +
-        `<span class="load-actions" style="flex: 2; text-align: right; padding-right: 5px;">Actions</span>` +
-        `</div>`;
-      // ------------------------------------------------
-
+      html += `<div class="action-section"><div class="section-label" style="display: inline-block;">LOAD SUPPLIES</div>`;
+      html += `<button class="btn-sm" id="filter-btn" style="display: inline-block; width: 18px; height: 20px; margin-left: 5px; float: right"> 
+        ${this.filterResources ? '✓' : ''} 
+      </button>`;
       const types = Object.keys(SUPPLY_TYPES);
       for (const type of types) {
         const stock = port.inventory[type] || 0;
-        if(stock <= 0 && this.filterSupplies) continue;
+        if(stock <= 0 && this.filterResources) continue;
         const shipHas = state.cargo[type] || 0;
         
         // --- FIXED DATA ROW (Matching Flex Alignment) ---
