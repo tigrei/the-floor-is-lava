@@ -17,36 +17,39 @@ class GameMap {
     // (mapped to actual canvas size during render)
     // inventory keys are cargo_id values from supply-data.js (SUPPLY_TYPES)
     this.ports = [
-      { name: "Yokosuka",     nx: 0.82, ny: 0.08, type: "base",
-        inventory: { "CARGO-034": 40, "CARGO-033": 30, "CARGO-004": 30, "CARGO-008": 20, "CARGO-010": 10, "CARGO-028": 5, "CARGO-001": 5} },
-      { name: "Sasebo",       nx: 0.58, ny: 0.12, type: "base",
-        inventory: { "CARGO-010": 4, "CARGO-013": 30, "CARGO-001": 30, "CARGO-006": 20, "CARGO-028": 20, "CARGO-004": 5, "CARGO-033": 5 } },
-      { name: "Okinawa",      nx: 0.68, ny: 0.25, type: "site" },
-      { name: "Miyako-jima",  nx: 0.55, ny: 0.33, type: "site" },
-      { name: "Yonaguni",     nx: 0.43, ny: 0.30, type: "site" },
-      { name: "Green Island", nx: 0.47, ny: 0.42, type: "site" },
-      { name: "Pratas",       nx: 0.32, ny: 0.54, type: "site" },
+      { name: "Yokosuka",     nx: 0.97, ny: 0.03, type: "base",
+        inventory: { "CARGO-034": 40, "CARGO-033": 30, "CARGO-004": 30, "CARGO-008": 20, "CARGO-010": 10, "CARGO-028": 5, "CARGO-001": 5} ,
+      },
+      { name: "Sasebo",       nx: 0.7, ny: 0.15, type: "base",
+        inventory: { "CARGO-010": 4, "CARGO-013": 30, "CARGO-001": 30, "CARGO-006": 20, "CARGO-028": 20, "CARGO-004": 5, "CARGO-033": 5 } 
+      },
+      { name: "Okinawa",      nx: 0.64, ny: 0.47, type: "site" },
+      { name: "Kunsan",  nx: 0.63, ny: 0.08, type: "base",
+        inventory: { "CARGO-013": 3, "CARGO-008": 30, "CARGO-028": 30, "CARGO-033": 25, "CARGO-010": 5, "CARGO-004": 15, "CARGO-001": 5} ,
+       },
       { name: "Batanes",      nx: 0.42, ny: 0.57, type: "site" },
       { name: "Subic Bay",    nx: 0.35, ny: 0.70, type: "base",
-        inventory: { "CARGO-013": 3, "CARGO-008": 30, "CARGO-028": 30, "CARGO-033": 20, "CARGO-010": 5, "CARGO-004": 10, "CARGO-001": 5 } },
-      { name: "Palawan",      nx: 0.22, ny: 0.80, type: "site" ,
-        inventory: { "CARGO-013": 3, "CARGO-008": 30, "CARGO-028": 30, "CARGO-033": 25, "CARGO-010": 5, "CARGO-004": 15, "CARGO-001": 5} },
-      { name: "Itu Aba",      nx: 0.15, ny: 0.62, type: "site" },
-      { name: "Guam",         nx: 0.90, ny: 0.44, type: "base",
-        inventory: { "CARGO-013": 5, "CARGO-001": 5, "CARGO-006": 15, "CARGO-004": 30, "CARGO-027": 25, "CARGO-010": 10, "CARGO-034": 10, "CARGO-028": 15 } },
+        inventory: { "CARGO-013": 3, "CARGO-008": 30, "CARGO-028": 30, "CARGO-033": 20, "CARGO-010": 5, "CARGO-004": 10, "CARGO-001": 5 }
+      }, 
+      { name: "Palawan",      nx: 0.28, ny: 1.02, type: "site" },
+      { name: "Guam",         nx: 0.9, ny: 1.02, type: "base",
+        inventory: { "CARGO-013": 5, "CARGO-001": 5, "CARGO-006": 15, "CARGO-004": 30, "CARGO-027": 25, "CARGO-010": 10, "CARGO-034": 10, "CARGO-028": 15 }
+      },
+      { name: "Camilo Osias", nx: 0.45, ny: 0.86, type: "site"},
+      { name: "Kyogamisaki", nx: 0.87, ny: 0.0 }
     ];
 
     this.connections = [
-      [0, 1, 3], [0, 2, 3], [0, 11, 5],
+      [0, 1, 3], [0, 2, 4],
       [1, 2, 2],
-      [2, 3, 2], [2, 11, 4],
-      [3, 4, 1], [3, 5, 2],
-      [4, 5, 1],
-      [5, 6, 2], [5, 7, 2],
-      [6, 8, 3], [6, 10, 2],
-      [7, 8, 2],
-      [8, 9, 2], [8, 10, 3], [8, 11, 5],
-      [9, 10, 2],
+      [2, 3, 2], [2, 7, 5],
+      [4, 5, 2],
+      [5, 6, 2],
+      [4, 7, 5],
+      [4, 2, 2],
+      [1, 3, 1],
+      [8, 4, 2], [8, 5, 2],
+      [9, 3, 2]
     ];
 
     this._resize();
