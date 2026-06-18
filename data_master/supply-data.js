@@ -17,17 +17,16 @@ const SUPPLY_TYPES = {
 };
 
 const REQUEST_TEMPLATES = [
-  { mission: "Airfield damage repair — runway cratered by loitering munitions", supplies: { "CARGO-013": 10, "CARGO-001": 5 } },
-  { mission: "Garrison water contaminated — emergency purification needed", supplies: { "CARGO-019": 5, "CARGO-028": 5 } },
-  { mission: "Forward radar array needs comms upgrade and backup power", supplies: { "CARGO-033": 5, "CARGO-031": 5 } },
-  { mission: "Coastal road destroyed — temporary bridge for vehicle access", supplies: { "CARGO-010": 10 } },
-  { mission: "Camp expansion — hardened shelters and field workshop", supplies: { "CARGO-004": 5, "CARGO-013": 5 } },
-  { mission: "Forward medical facility — modular shelter with generators", supplies: { "CARGO-004": 10, "CARGO-030": 5 } },
-  { mission: "Port facility repair — crane equipment and pier reinforcement", supplies: { "CARGO-006": 5, "CARGO-013": 5 } },
-  { mission: "SIGINT station — antenna array and encrypted relay equipment", supplies: { "CARGO-034": 10 } },
-  { mission: "Ammunition bunker — hardened underground structure required", supplies: { "CARGO-008": 5, "CARGO-032": 5 } },
-  { mission: "Remote observation post — self-sufficient station deployment", supplies: { "CARGO-028": 10, "CARGO-029": 5, "CARGO-004": 15 } },
-  { mission: "Mobile command post — power grid and tactical comms array", supplies: { "CARGO-031": 5, "CARGO-033": 15 } },
-  { mission: "Coastal fortification — excavation equipment for earthworks", supplies: { "CARGO-027": 15 } },
-
+{ mission: "Airfield damage repair — runway cratered by loitering munitions", supplies: { "CARGO-013": 35, "CARGO-001": 20 }, urgencyPool: ["high"] },
+  { mission: "Garrison water contaminated — emergency purification needed", supplies: { "CARGO-019": 25, "CARGO-028": 50 }, urgencyPool: ["high"] },
+  { mission: "Forward radar array needs comms upgrade and backup power", supplies: { "CARGO-033": 15, "CARGO-031": 20 }, urgencyPool: ["medium", "high"] },
+  { mission: "Coastal road destroyed — temporary bridge for vehicle access", supplies: { "CARGO-010": 30 }, urgencyPool: ["medium"] },
+  { mission: "Camp expansion — hardened shelters and field workshop", supplies: { "CARGO-004": 10, "CARGO-013": 15 }, urgencyPool: ["low", "medium"] },
+  { mission: "Forward medical facility — modular shelter with generators", supplies: { "CARGO-004": 20, "CARGO-030": 45 }, urgencyPool: ["high"] },
+  { mission: "Port facility repair — crane equipment and pier reinforcement", supplies: { "CARGO-006": 15, "CARGO-013": 30 }, urgencyPool: ["medium"] },
+  { mission: "SIGINT station — antenna array and encrypted relay equipment", supplies: { "CARGO-034": 10 }, urgencyPool: ["low"] },
+  { mission: "Ammunition bunker — hardened underground structure required", supplies: { "CARGO-008": 35, "CARGO-032": 25 }, urgencyPool: ["medium", "high"] },
+  { mission: "Remote observation post — self-sufficient station deployment", supplies: { "CARGO-028": 30, "CARGO-029": 25, "CARGO-004": 40 }, urgencyPool: ["low", "medium"] },
+  { mission: "Mobile command post — power grid and tactical comms array", supplies: { "CARGO-031": 35, "CARGO-033": 55 }, urgencyPool: ["high"] },
+  { mission: "Coastal fortification — excavation equipment for earthworks", supplies: { "CARGO-027": 60 }, urgencyPool: ["medium", "high"] },
 ];
