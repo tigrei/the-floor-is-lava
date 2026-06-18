@@ -2,6 +2,7 @@ class Game {
   constructor() {
     this.map = new GameMap("map-canvas");
     this.ui = new UI(this);
+    this.holdPositionState = { active: false, daysLeft: null };
 
     this.state = {
       day: 1,
@@ -99,17 +100,52 @@ class Game {
   }
 
   async _doTick() {
+    await this._advanceDay({ scheduleNext: true });
+  }
+
+  async holdPosition(days = 2) {
+    if (this.state.traveling || this.state.gameOver) return;
+    this.holdPositionState.active = true;
+    this.holdPositionState.daysLeft = days;
+    this._render();
+    this.ui.renderSidebar();
+
+    try {
+      for (let i = 0; i < days; i++) {
+        if (this.state.gameOver || this.state.traveling) break;
+        this.holdPositionState.daysLeft = days - i;
+        this._render();
+        this.ui.renderSidebar();
+        await this._sleep(1100);
+        await this._advanceDay({ scheduleNext: false, allowEvents: false });
+      }
+    } finally {
+      this.holdPositionState.active = false;
+      this.holdPositionState.daysLeft = null;
+      this._render();
+      this.ui.renderSidebar();
+    }
+  }
+
+  _sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async _advanceDay({ scheduleNext = false, allowEvents = true } = {}) {
     const state = this.state;
+    const wasTraveling = state.traveling;
     state.day++;
-    state.travelElapsed++;
-    state.travelDaysRemaining = Math.max(0, state.travelDaysRemaining - 1);
+    if (wasTraveling) {
+      state.travelElapsed++;
+      state.travelDaysRemaining = Math.max(0, state.travelDaysRemaining - 1);
+    }
 
     this._checkDeadlines();
     this._maybeGenerateRequest();
     this._render();
     this.ui.renderSidebar();
 
-    if (shouldEventTrigger()) {
+    if (allowEvents && shouldEventTrigger()) {
       const event = getRandomEvent();
       const message = await this.ui.showEvent(event, state);
       this.ui.addLog(state.day, message, "neutral");
@@ -151,7 +187,7 @@ class Game {
       })
     }
 
-    if (state.travelDaysRemaining <= 0) {
+    if (wasTraveling && state.travelDaysRemaining <= 0) {
       state.traveling = false;
       state.currentPort = state.travelTo;
       state.travelFrom = null;
@@ -167,7 +203,7 @@ class Game {
       return;
     }
 
-    this._scheduleTick();
+    if (scheduleNext) this._scheduleTick();
   }
 
   // --- Cargo ---
@@ -181,6 +217,19 @@ class Game {
     if (actual <= 0) return;
     port.inventory[type] -= actual;
     this.state.cargo[type] = (this.state.cargo[type] || 0) + actual;
+    this._render();
+    this.ui.renderSidebar();
+  }
+
+  unloadCargo(type, amount) {
+    const port = this.map.ports[this.state.currentPort];
+    if (!port || port.type !== "base") return;
+    const have = this.state.cargo[type] || 0;
+    const actual = Math.min(amount, have);
+    if (actual <= 0) return;
+    port.inventory[type] = (port.inventory[type] || 0) + actual;
+    this.state.cargo[type] -= actual;
+    if (this.state.cargo[type] <= 0) delete this.state.cargo[type];
     this._render();
     this.ui.renderSidebar();
   }

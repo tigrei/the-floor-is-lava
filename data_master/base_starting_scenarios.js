@@ -12,8 +12,9 @@ const SCENARIO_1 = [
     inventory: { "Steel": 45, "Equipment": 50, "Water": 30, "Comms": 25 }
   },
   {
-    name: "Subic Bay",
-    inventory: { "Equipment": 65, "Steel": 55, "Water": 45, "Comms": 25 }
+    // Heavy logistics hub — excellent harbor, deepest equipment and steel pools.
+    name: "Camilo Osias",
+    inventory: { "Equipment": 130, "Steel": 110, "Water": 90, "Fuel": 80, "Comms": 70, "Food": 70, "Medical": 70, "Ammo": 70 }
   },
   {
     name: "Guam",
