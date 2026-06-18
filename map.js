@@ -303,6 +303,8 @@ class GameMap {
       const requestsAtPort = game.requests.filter(r =>
         (r.status === "active" || r.status === "contested") && r.destination === index
       );
+      const isStorm = !isContested && game.isRouteWeatherBlocked(this.lastShipState.currentPort, index);
+      
       game.ui.showTravelConfirm({
         port,
         days: travelDays,
@@ -311,6 +313,7 @@ class GameMap {
         isContested,
         isNeighbor,
         isCurrentPort,
+        isStorm,
         onConfirm: () => game.startTravel(index),
       });
     } else {

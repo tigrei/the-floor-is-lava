@@ -207,7 +207,7 @@ class UI {
     });
   }
 
-  showTravelConfirm({ port, days, inventory, requests, isContested, isNeighbor, isCurrentPort, onConfirm }) {
+  showTravelConfirm({ port, days, inventory, requests, isContested, isNeighbor, isCurrentPort, isStorm, onConfirm }) {
     const daysLabel = days === 1 ? "1 day" : `${days} days`;
     const portTypeTag = port.type === "base" ? '<span class="port-type-tag base">Base</span>' : '<span class="port-type-tag site">Site</span>';
     this.els.modalTitle.innerHTML = `${port.name} ${portTypeTag}`;
@@ -226,6 +226,8 @@ class UI {
       this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle">Currently Docked</div>`);
     } else if (isContested) {
       this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle contested">Warning: cannot travel to contested port.</div>`);
+    } else if (isStorm) {
+      this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle storm">Warning: route is blocked by storm.</div>`);
     } else if (!isNeighbor) {
       this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle">Direct travel not available from current port.</div>`);
     }
@@ -281,7 +283,7 @@ class UI {
 
     this.els.modalChoices.innerHTML = "";
 
-    if (isNeighbor && !isContested && !isCurrentPort) {
+    if (isNeighbor && !isContested && !isStorm && !isCurrentPort) {
       const travelBtn = document.createElement("button");
       travelBtn.textContent = "Travel";
       travelBtn.addEventListener("click", () => {
