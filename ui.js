@@ -23,33 +23,46 @@ class UI {
   _renderShipStatus() {
     const state = this.game.state;
     const total = this.game.getCargoTotal();
-    
-    let locationHtml;
-    if (state.traveling) {
-      const destPort = this.game.map.ports[state.travelTo];
-      locationHtml = 
-        `<div class="ship-location-container">` +
-        `<div class="ship-location-heading">In Transit</div>` +
-        `<div class="ship-location-subtitle">→ ${destPort.name} (${state.travelDaysRemaining}d remaining)</div>` +
-        `</div>`;
-    } else {
-      const currentPort = this.game.map.ports[state.currentPort];
-      locationHtml = 
-        `<div class="ship-location-container">` +
-        `<div class="ship-location-heading">${currentPort.name}</div>` +
-        `<div class="ship-location-subtitle">Currently Docked</div>` +
-        `</div>`;
-    }
+    const loc = state.traveling
+      ? `In transit → ${this.game.map.ports[state.travelTo].name} (${state.travelDaysRemaining}d remaining)`
+      : `Docked at ${this.game.map.ports[state.currentPort].name}`;
 
     let cargoHtml = "";
     for (const [type, amt] of Object.entries(state.cargo)) {
-      if (amt > 0) cargoHtml += `<div class="cargo-row"><span>${SUPPLY_TYPES[type].short}</span><span>${amt}t</span></div>`;
+      if (amt > 0) cargoHtml += `<div class="cargo-row"><span>${type}</span><span>${amt}t</span></div>`;
     }
     if (!cargoHtml) cargoHtml = '<div class="cargo-empty">Empty</div>';
 
+    const blockedCount = this.game.weather.scenario ? this.game.getWeatherBlockedRoutes().size : 0;
+    const weatherLabel = this.game.weather.label;
+    const weatherDetail = blockedCount > 0
+      ? `<span class="weather-blocked">${blockedCount} route${blockedCount > 1 ? "s" : ""} blocked</span>`
+      : `<span class="weather-clear">Lanes open</span>`;
+
+    // Sea state at the ship's actual position (interpolated while in transit).
+    let seaHtml = "";
+    if (this.game.weather.scenario) {
+      let nx, ny;
+      if (state.traveling) {
+        const from = this.game.map.ports[state.travelFrom], to = this.game.map.ports[state.travelTo];
+        const totalDays = state.travelElapsed + state.travelDaysRemaining;
+        const t = totalDays > 0 ? state.travelElapsed / totalDays : 0;
+        nx = from.nx + t * (to.nx - from.nx);
+        ny = from.ny + t * (to.ny - from.ny);
+      } else {
+        const port = this.game.map.ports[state.currentPort];
+        nx = port.nx; ny = port.ny;
+      }
+      const res = this.game.weather.getResistanceAt(nx, ny, state.day);
+      const sea = this.game.weather.seaState(res);
+      seaHtml = `<div class="weather-status"><span class="weather-label">Sea state</span><span class="sea-state ${sea.cls}">${sea.label}</span></div>`;
+    }
+
     this.els.shipStatus.innerHTML =
       `<h2>Ship Status</h2>` +
-      `${locationHtml}` +
+      `<div class="ship-location">${loc}</div>` +
+      `<div class="weather-status"><span class="weather-label">Weather: ${weatherLabel}</span>${weatherDetail}</div>` +
+      seaHtml +
       `<div class="cargo-bar"><span>Cargo</span><span>${total} / ${state.maxCargo}t</span></div>` +
       `<div class="cargo-bar-visual"><div class="cargo-bar-fill" style="width:${(total / state.maxCargo) * 100}%"></div></div>` +
       `<div class="cargo-list">${cargoHtml}</div>`;
@@ -92,7 +105,6 @@ class UI {
       const types = Object.keys(SUPPLY_TYPES);
       for (const type of types) {
         const stock = port.inventory[type] || 0;
-        if (stock <= 0) continue;
         const shipHas = state.cargo[type] || 0;
         html += `<div class="load-row">` +
           `<span class="load-name">${SUPPLY_TYPES[type].short}</span>` +
@@ -339,6 +351,31 @@ class UI {
     const btn = document.createElement("button");
     btn.textContent = "Play Again";
     btn.addEventListener("click", () => { this.hideModal(); window.location.reload(); });
+    this.els.modalChoices.appendChild(btn);
+    this.els.overlay.classList.remove("hidden");
+  }
+
+  showScenarioBrief() {
+    this.els.modalTitle.textContent = "L.A.V.A. — Operations Briefing";
+    this.els.modalBody.innerHTML =
+      `<div class="brief-container" style="text-align: left; font-size: 0.85rem; line-height: 1.5;">` +
+      `<p style="margin-bottom: 8px; font-weight: bold; color: var(--gold);">1. SITUATION</p>` +
+      `<p style="margin-bottom: 12px;">` +
+      `You are in command of supply and delivery operations for expeditionary forces in the contested First Island Chain. Under intense Gray Zone pressure, neighboring ports depend on your logistics support to maintain deterrence.` +
+      `</p>` +
+      `<p style="margin-bottom: 8px; font-weight: bold; color: var(--gold);">2. MISSION OBJECTIVES</p>` +
+      `<ul style="margin-left: 16px; margin-bottom: 12px; list-style-type: square; line-height: 1.4;">` +
+      `<li style="margin-bottom: 4px;"><b>Load Cargo</b>: Pick up vital construction materials, communication grids, mobile shelters, and heavy machinery at Base Ports.</li>` +
+      `<li style="margin-bottom: 4px;"><b>Route Optimization</b>: Deliver requests to contested sites before deadlines expire.</li>` +
+      `<li style="margin-bottom: 4px;"><b>Prevent Domino Effect</b>: If ports remain unsupplied in a high-need status, their urgency escalates. Critical ports will roll to become <b>CONTESTED</b>, blocking sea lanes until neighboring base nodes facilitate a recovery.</li>` +
+      `</ul>` +
+      `<p style="margin-bottom: 8px; font-weight: bold; color: var(--gold);">3. EXECUTION WINDOW</p>` +
+      `<p>Deliver maximum tonnage within <b>60 Days</b>. Hostile forces are monitoring. Good luck, Commander.</p>` +
+      `</div>`;
+    this.els.modalChoices.innerHTML = "";
+    const btn = document.createElement("button");
+    btn.textContent = "Acknowledge & Start Mission";
+    btn.addEventListener("click", () => { this.hideModal(); });
     this.els.modalChoices.appendChild(btn);
     this.els.overlay.classList.remove("hidden");
   }

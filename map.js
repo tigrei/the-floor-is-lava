@@ -9,7 +9,7 @@ class GameMap {
     this.bgImage.onload = () => {
       this.bgLoaded = true;
       if (this.lastShipState && this.lastRequestPorts) {
-        this.render(this.lastShipState, this.lastRequestPorts, this.lastContestedPorts);
+        this.render(this.lastShipState, this.lastRequestPorts, this.lastContestedPorts, this.lastWeatherBlockedRoutes);
       }
     };
 
@@ -46,7 +46,7 @@ class GameMap {
     this.canvas.width  = rect.width;
     this.canvas.height = rect.height;
     if (this.lastShipState && this.lastRequestPorts) {
-      this.render(this.lastShipState, this.lastRequestPorts, this.lastContestedPorts);
+      this.render(this.lastShipState, this.lastRequestPorts, this.lastContestedPorts, this.lastWeatherBlockedRoutes);
     }
   }
 
@@ -74,10 +74,11 @@ class GameMap {
     return null;
   }
 
-  render(shipState, requestPorts, contestedPorts) {
+  render(shipState, requestPorts, contestedPorts, weatherBlockedRoutes) {
     this.lastShipState = shipState;
     this.lastRequestPorts = requestPorts;
     this.lastContestedPorts = contestedPorts;
+    this.lastWeatherBlockedRoutes = weatherBlockedRoutes;
 
     const { ctx, canvas } = this;
     if (this.bgLoaded) {
@@ -93,9 +94,11 @@ class GameMap {
     for (const [a, b] of this.connections) {
       const pa = this._toPixel(this.ports[a].nx, this.ports[a].ny);
       const pb = this._toPixel(this.ports[b].nx, this.ports[b].ny);
+      const routeKey = `${Math.min(a, b)}-${Math.max(a, b)}`;
+      const isWeatherBlocked = weatherBlockedRoutes && weatherBlockedRoutes.has(routeKey);
       ctx.beginPath();
-      ctx.strokeStyle = "rgba(79,195,247,0.12)";
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = isWeatherBlocked ? "rgba(255,152,0,0.25)" : "rgba(79,195,247,0.12)";
+      ctx.lineWidth = isWeatherBlocked ? 2 : 1;
       ctx.moveTo(pa.x, pa.y);
       ctx.lineTo(pb.x, pb.y);
       ctx.stroke();
@@ -106,9 +109,14 @@ class GameMap {
       for (const { port: idx, days } of connected) {
         const pa = this._toPixel(this.ports[shipState.currentPort].nx, this.ports[shipState.currentPort].ny);
         const pb = this._toPixel(this.ports[idx].nx, this.ports[idx].ny);
+        const routeKey = `${Math.min(shipState.currentPort, idx)}-${Math.max(shipState.currentPort, idx)}`;
         const isTargetContested = contestedPorts && contestedPorts.has(idx);
+        const isStormBlocked = weatherBlockedRoutes && weatherBlockedRoutes.has(routeKey);
+        const lineColor = isTargetContested ? "rgba(239,83,80,0.45)" : isStormBlocked ? "rgba(255,152,0,0.55)" : "rgba(79,195,247,0.35)";
+        const labelColor = isTargetContested ? "#ef5350" : isStormBlocked ? "#ff9800" : "#7a8ba0";
+        const labelText = isTargetContested ? "Blocked" : isStormBlocked ? "Storm" : `${days}d`;
         ctx.beginPath();
-        ctx.strokeStyle = isTargetContested ? "rgba(239,83,80,0.45)" : "rgba(79,195,247,0.35)";
+        ctx.strokeStyle = lineColor;
         ctx.lineWidth = 2;
         ctx.setLineDash([6, 4]);
         ctx.moveTo(pa.x, pa.y);
@@ -116,10 +124,10 @@ class GameMap {
         ctx.stroke();
         ctx.setLineDash([]);
         const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
-        ctx.fillStyle = isTargetContested ? "#ef5350" : "#7a8ba0";
+        ctx.fillStyle = labelColor;
         ctx.font = "10px 'Segoe UI', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(isTargetContested ? "Blocked" : `${days}d`, mx, my - 5);
+        ctx.fillText(labelText, mx, my - 5);
       }
     }
 

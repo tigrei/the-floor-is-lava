@@ -24,6 +24,13 @@ class Game {
 
     this._initBaseInventories();
 
+    this.weather = new WeatherSystem();
+    this.weather.load().then(label => {
+      this.ui.addLog(1, `Weather pattern active: ${label}`, "neutral");
+      this._render();
+      this.ui.renderSidebar();
+    });
+
     this._generateRequest();
     this._generateRequest();
     this._generateRequest();
@@ -32,6 +39,7 @@ class Game {
     this._render();
     this.ui.renderSidebar();
     this.ui.addLog(1, `Docked at ${this.map.ports[this.state.currentPort].name}. Three supply requests are active.`, "port");
+    this.ui.showScenarioBrief();
   }
 
   _initBaseInventories() {
@@ -66,6 +74,10 @@ class Game {
     if (days === null || this.state.traveling || this.state.gameOver) return;
     if (this.isPortContested(targetPort)) {
       this.ui.addLog(this.state.day, `Cannot set course to ${this.map.ports[targetPort].name} — port is contested.`, "bad");
+      return;
+    }
+    if (this.isRouteWeatherBlocked(this.state.currentPort, targetPort)) {
+      this.ui.addLog(this.state.day, `Cannot transit to ${this.map.ports[targetPort].name} — route blocked by storm.`, "bad");
       return;
     }
     const s = this.state;
@@ -124,7 +136,8 @@ class Game {
 
         const selectedMaterials = randomize(materials)
         const logOutput = selectedMaterials.map(material => {
-          return `\t-${material}`
+          const label = SUPPLY_TYPES[material]?.short || material;
+          return `\t- ${label}`
         }).join('\n')
 
         selectedMaterials.forEach((material) => {
@@ -188,11 +201,17 @@ class Game {
 
   quickLoad(requestId) {
     const req = this.requests.find(r => r.id === requestId);
-    if (!req || req.status !== "active") return;
+    if (!req || req.status !== "active")
+      return;
+
     for (const [type, needed] of Object.entries(req.remaining)) {
+      const totalNeededAcrossRequests = this.requests.map(r => r.remaining[type] || 0).reduce((a, b) => a + b, 0);    
       const have = this.state.cargo[type] || 0;
-      const stillNeed = needed - have;
-      if (stillNeed > 0) this.loadCargo(type, stillNeed);
+      if (totalNeededAcrossRequests > have) {
+        const totalStillNeeded = totalNeededAcrossRequests - have;
+        const totalToLoad = Math.min(totalStillNeeded, needed);
+        this.loadCargo(type, totalToLoad);
+      }
     }
   }
 
@@ -260,6 +279,24 @@ class Game {
       if (r.status === "contested") s.add(r.destination);
     }
     return s;
+  }
+
+  isRouteWeatherBlocked(fromIdx, toIdx) {
+    return this.weather.isRouteBlocked(
+      this.map.ports[fromIdx],
+      this.map.ports[toIdx],
+      this.state.day
+    );
+  }
+
+  getWeatherBlockedRoutes() {
+    const blocked = new Set();
+    for (const [a, b] of this.map.connections) {
+      if (this.weather.isRouteBlocked(this.map.ports[a], this.map.ports[b], this.state.day)) {
+        blocked.add(`${Math.min(a, b)}-${Math.max(a, b)}`);
+      }
+    }
+    return blocked;
   }
 
   // --- Requests ---
@@ -365,9 +402,9 @@ class Game {
   }
 
   _render() {
-    this.map.render(this.state, this.getRequestPorts(), this.getContestedPorts());
+    this.map.render(this.state, this.getRequestPorts(), this.getContestedPorts(), this.getWeatherBlockedRoutes());
     document.getElementById("day-counter").textContent = `Day ${this.state.day}`;
-    document.getElementById("score-display").textContent = `Delivered: ${this.score.fulfilled}/${this.score.totalRequests}`;
+    document.getElementById("score-display").innerHTML = `Delivered: ${this.score.fulfilled}&ensp;<span class="failed-section">Failed: ${this.score.failed}</span>`;
   }
 }
 
