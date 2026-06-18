@@ -218,7 +218,7 @@ class UI {
 
     let inventoryHtml;
     if (isContested) {
-      inventoryHtml = `<div class="travel-section"><strong>Available inventory:</strong> Communications unavailable: unable to see inventory at this moment.</div>`;
+      inventoryHtml = `<div class="travel-section"><strong>Available inventory:</strong> Comms Blackout: Unable to see inventory at this moment.</div>`;
     } else {
       inventoryHtml = inventory && Object.keys(inventory).length
         ? `<div class="travel-section"><strong>Available inventory:</strong> ${Object.entries(inventory)
