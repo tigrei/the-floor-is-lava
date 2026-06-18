@@ -260,7 +260,7 @@ class Game {
     const site = avail[Math.floor(Math.random() * avail.length)];
     const tmpl = REQUEST_TEMPLATES[Math.floor(Math.random() * REQUEST_TEMPLATES.length)];
     const urgency = tmpl.urgencyPool[Math.floor(Math.random() * tmpl.urgencyPool.length)];
-    const stageDaysLeft = { low: 10, medium: 8, high: 6 }[urgency];
+    const stageDaysLeft = { low: 15, medium: 12, high: 10 }[urgency];
 
     this.requests.push({
       id: this._nextId++,
