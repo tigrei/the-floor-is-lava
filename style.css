@@ -110,7 +110,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 }
 .load-name { color: var(--text); }
 .load-stock, .load-ship { text-align: right; }
-.btn-sm { padding: 2px 4px; border: 1px solid var(--accent-dim); border-radius: 3px; background: transparent; color: var(--accent); cursor: pointer; font-size: 0.7rem; padding: 1px px; transition: background 0.2s; }
+.btn-sm { padding: 2px 4px; border: 1px solid var(--accent-dim); border-radius: 3px; background: transparent; color: var(--accent); cursor: pointer; font-size: 0.7rem; padding: 1px 7px; transition: background 0.2s; }
 .btn-sm:hover { background: rgba(79,195,247,0.15); }
 
 /* Delivery grid */
