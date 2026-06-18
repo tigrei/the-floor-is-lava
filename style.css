@@ -100,7 +100,15 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 .section-label { font-size: 0.72rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-weight: 600; }
 
 /* Loading rows */
-.load-row { display: grid; grid-template-columns: 1fr 40px 40px 36px 36px; gap: 4px; align-items: center; font-size: 0.78rem; color: var(--text-muted); padding: 3px 0; }
+.load-row {
+  display: grid;
+  grid-template-columns: 1fr 40px 40px 36px 36px 48px;
+  gap: 4px;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  padding: 3px 0;
+}
 .load-name { color: var(--text); }
 .load-stock, .load-ship { text-align: right; }
 .btn-sm { padding: 2px 4px; border: 1px solid var(--accent-dim); border-radius: 3px; background: transparent; color: var(--accent); cursor: pointer; font-size: 0.7rem; }

@@ -122,6 +122,7 @@ class UI {
           `<span class="load-name">${type}</span>` +
           `<span class="load-stock">${stock}t</span>` +
           `<span class="load-ship">${shipHas}t</span>` +
+          `<button class="btn-sm" onclick="game.unloadCargo('${type}',5)">-5</button>` +
           `<button class="btn-sm" onclick="game.loadCargo('${type}',5)">+5</button>` +
           `<button class="btn-sm" onclick="game.loadCargo('${type}',999)">All</button>` +
           `</div>`;
