@@ -38,6 +38,10 @@ function shouldEventTrigger() {
   return Math.random() < 0.20;
 }
 
+function shouldPortResupply() {
+  return Math.random() < 0.50;
+}
+
 function getRandomEvent() {
   return EVENT_CATALOG[Math.floor(Math.random() * EVENT_CATALOG.length)];
 }

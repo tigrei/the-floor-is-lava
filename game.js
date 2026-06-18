@@ -1,7 +1,7 @@
 class Game {
   constructor() {
     this.map = new GameMap("map-canvas");
-    this.ui  = new UI(this);
+    this.ui = new UI(this);
 
     this.state = {
       day: 1,
@@ -74,10 +74,10 @@ class Game {
   }
 
   async _doTick() {
-    const s = this.state;
-    s.day++;
-    s.travelElapsed++;
-    s.travelDaysRemaining = Math.max(0, s.travelDaysRemaining - 1);
+    const state = this.state;
+    state.day++;
+    state.travelElapsed++;
+    state.travelDaysRemaining = Math.max(0, state.travelDaysRemaining - 1);
 
     this._checkDeadlines();
     this._maybeGenerateRequest();
@@ -86,24 +86,60 @@ class Game {
 
     if (shouldEventTrigger()) {
       const event = getRandomEvent();
-      const message = await this.ui.showEvent(event, s);
-      this.ui.addLog(s.day, message, "neutral");
+      const message = await this.ui.showEvent(event, state);
+      this.ui.addLog(state.day, message, "neutral");
       this._render();
       this.ui.renderSidebar();
     }
 
-    if (s.travelDaysRemaining <= 0) {
-      s.traveling = false;
-      s.currentPort = s.travelTo;
-      s.travelFrom = null;
-      s.travelTo = null;
-      this.ui.addLog(s.day, `Arrived at ${this.map.ports[s.currentPort].name}.`, "port");
+    if (shouldPortResupply()) {
+      const randomize = (arr) => {
+        const randNum = Math.floor(Math.random() * arr.length) + 1;
+        const shuffled = [...arr].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, randNum);
+        return selected
+      }
+
+      const basePorts = this.map.ports.filter((port) => port.type === "base");
+      const selectedBases = randomize(basePorts)
+
+      selectedBases.forEach((base) => {
+        const materials = Object.keys(base.inventory)
+        if (materials.length === 0) {
+          throw new Error("Empty inventory. We should not have gotten here")
+        }
+
+        const selectedMaterials = randomize(materials)
+        const logOutput = selectedMaterials.map(material => {
+          return `\t-${material}`
+        }).join('\n')
+
+        selectedMaterials.forEach((material) => {
+          let currentValue = base.inventory[material]
+
+          // Generate random integer greater than existing value
+          const min = currentValue + 1;
+          const max = currentValue + 50;
+          const newValue = Math.floor(Math.random() * (max - min + 1)) + min;
+          base.inventory[material] = newValue
+        })
+
+        this.ui.addLog(state.day, `${base.name} Resupplied!\n${logOutput}`, "good")
+      })
+    }
+
+    if (state.travelDaysRemaining <= 0) {
+      state.traveling = false;
+      state.currentPort = state.travelTo;
+      state.travelFrom = null;
+      state.travelTo = null;
+      this.ui.addLog(state.day, `Arrived at ${this.map.ports[state.currentPort].name}.`, "port");
       this._render();
       this.ui.renderSidebar();
       return;
     }
 
-    if (s.day >= 60) {
+    if (state.day >= 60) {
       this._endGame();
       return;
     }
@@ -193,8 +229,8 @@ class Game {
       if (neighborPort.type === "base") {
         count++;
       } else {
-        const hasActiveOrContested = this.requests.some(r => 
-          r.destination === conn.port && 
+        const hasActiveOrContested = this.requests.some(r =>
+          r.destination === conn.port &&
           (r.status === "active" || r.status === "contested")
         );
         if (!hasActiveOrContested) {
