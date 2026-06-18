@@ -183,6 +183,7 @@ class UI {
 
   showTravelConfirm({ portName, days, inventory, requests, isContested, isNeighbor, onConfirm }) {
     const daysLabel = days === 1 ? "1 day" : `${days} days`;
+    this.els.modalTitle.textContent = portName;
     if (isContested) {
       this.els.modalTitle.innerHTML += `<div class="modal-subtitle contested">Warning: cannot travel to contested port.</div>`;
     } else if (!isNeighbor) {
