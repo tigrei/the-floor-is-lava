@@ -11,14 +11,6 @@ class UI {
       modalBody:    document.getElementById("modal-body"),
       modalChoices: document.getElementById("modal-choices"),
     };
-
-    // port catalog
-    this.portCatalog = {};
-    for (const port of PORTS) {
-      if (port.type === "base")
-        this.portCatalog[port.name] = Object.keys(port.inventory);
-    }
-    console.log(this.portCatalog);
   }
 
   renderSidebar() {
@@ -85,7 +77,6 @@ class UI {
       const types = Object.keys(SUPPLY_TYPES);
       for (const type of types) {
         const stock = port.inventory[type] || 0;
-        if (stock <= 0 && !this.portCatalog[port.name].includes(type)) continue;
         const shipHas = s.cargo[type] || 0;
         html += `<div class="load-row">` +
           `<span class="load-name">${SUPPLY_TYPES[type].short}</span>` +
