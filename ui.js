@@ -310,7 +310,7 @@ class UI {
 
     // inventory details 
     let inventoryHtml = "";
-    if (isContested) {
+    if ((isContested || isStorm) && port.type !== "site") {
       inventoryHtml = `<div class="travel-section"><strong>Available inventory:</strong> Comms Blackout: Unable to see inventory at this moment.</div>`;
     } else if (port.type === "base") {
       inventoryHtml = inventory && Object.keys(inventory).length
