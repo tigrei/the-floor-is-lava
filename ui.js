@@ -183,13 +183,24 @@ class UI {
 
   showTravelConfirm({ portName, days, inventory, requests, isContested, isNeighbor, onConfirm }) {
     const daysLabel = days === 1 ? "1 day" : `${days} days`;
-    this.els.modalTitle.textContent = "Confirm Travel";
-    const inventoryHtml = inventory && Object.keys(inventory).length
-      ? `<div class="travel-section"><strong>Available inventory:</strong> ${Object.entries(inventory)
-          .filter(([, amt]) => amt > 0)
-          .map(([type, amt]) => `${SUPPLY_TYPES[type]?.short || type}: ${amt}t`)
-          .join(", ")}</div>`
-      : "<div class=\"travel-section\"><strong>Available inventory:</strong> None</div>";
+    if (isContested) {
+      this.els.modalTitle.innerHTML += `<div class="modal-subtitle contested">Warning: cannot travel to contested port.</div>`;
+    } else if (!isNeighbor) {
+      this.els.modalTitle.innerHTML += `<div class="modal-subtitle">Direct travel not available from current port.</div>`;
+    }
+    this.els.modalTitle.classList.toggle("modal-title-contested", isContested);
+
+    let inventoryHtml;
+    if (isContested) {
+      inventoryHtml = `<div class="travel-section"><strong>Available inventory:</strong> Communications unavailable: unable to see inventory at this moment.</div>`;
+    } else {
+      inventoryHtml = inventory && Object.keys(inventory).length
+        ? `<div class="travel-section"><strong>Available inventory:</strong> ${Object.entries(inventory)
+            .filter(([, amt]) => amt > 0)
+            .map(([type, amt]) => `${SUPPLY_TYPES[type]?.short || type}: ${amt}t`)
+            .join(", ")}</div>`
+        : "<div class=\"travel-section\"><strong>Available inventory:</strong> None</div>";
+    }
     const requestHtml = requests && requests.length
       ? `<div class="travel-section"><strong>Requests at destination:</strong>${requests.map(req => {
           const urgencyLabel = req.status === "contested"
@@ -207,14 +218,13 @@ class UI {
       : "<div class=\"travel-section\"><strong>Requests at destination:</strong> None</div>";
 
     this.els.modalBody.innerHTML =
-      `${isNeighbor ? `<div class="travel-summary">Set sail to ${portName}? Estimated travel time: ${daysLabel}.</div>` : ""}` +
-      `${isContested ? `<div class="travel-warning">Warning: destination is contested.</div>` : ""}` +
+      `${(isNeighbor && !isContested) ? `<div class="travel-summary">Set sail to ${portName}? Estimated travel time: ${daysLabel}.</div>` : ""}` +
       `${inventoryHtml}` +
       `${requestHtml}`;
 
     this.els.modalChoices.innerHTML = "";
 
-    if (isNeighbor) {
+    if (isNeighbor && !isContested) {
       const travelBtn = document.createElement("button");
       travelBtn.textContent = "Travel";
       travelBtn.addEventListener("click", () => {

@@ -313,11 +313,6 @@ class GameMap {
 
     if (typeof game !== 'undefined') {
       const isContested = game.isPortContested(index);
-      if (isContested) {
-        game.ui.showToast(`Cannot travel to ${port.name} — port is contested.`, "error");
-        return;
-      }
-
       const neighbors = this.getConnected(this.lastShipState.currentPort);
       const isNeighbor = neighbors.some(n => n.port === index);
       const travelDays = this.getTravelTime(this.lastShipState.currentPort, index);

@@ -111,6 +111,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 #modal-overlay.hidden { display: none; }
 #modal { background: var(--bg-panel); border: 1px solid var(--accent); border-radius: var(--radius); padding: 24px 28px; max-width: 460px; width: 90%; text-align: center; }
 #modal h2 { color: var(--accent); margin-bottom: 10px; font-size: 1.1rem; }
+#modal h2.modal-title-contested { color: var(--danger); }
+#modal h2 .modal-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; font-weight: 400; }
+#modal h2 .modal-subtitle.contested { color: var(--danger); font-weight: 700; }
 #modal-body { color: var(--text); margin-bottom: 16px; line-height: 1.5; font-size: 0.9rem; text-align: left; }
 #modal-body .travel-summary { margin-bottom: 10px; font-weight: 600; }
 #modal-body .travel-warning { margin-bottom: 10px; color: var(--danger); font-weight: 700; }
