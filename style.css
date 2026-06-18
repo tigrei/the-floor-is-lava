@@ -82,6 +82,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 .btn-unload { border-color: var(--text-muted); color: var(--text-muted); font-size: 0.75rem; }
 .btn-quickload { font-size: 0.75rem; border-color: var(--gold); color: var(--gold); }
 .btn-quickload:hover { background: rgba(255,213,79,0.1); }
+.btn-hold { border-color: #ff9800; color: #ffb74d; margin-top: 6px; }
+.btn-hold:hover { background: rgba(255,152,0,0.12); }
+.wait-note { font-size: 0.78rem; color: var(--text-muted); line-height: 1.4; margin: 4px 0; }
+.wait-note.stranded { color: #ffb74d; font-weight: 600; }
 
 /* Navigation buttons */
 .btn-nav { width: 100%; padding: 7px 10px; border: 1px solid var(--accent-dim); border-radius: var(--radius); background: transparent; color: var(--text); cursor: pointer; font-size: 0.82rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; transition: background 0.2s; }
@@ -119,6 +123,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 #log-entries li.event-bad { border-color: var(--danger); }
 #log-entries li.event-good { border-color: var(--success); }
 #log-entries li.event-port { border-color: var(--gold); }
+#log-entries li.event-incident { border-color: #ff9800; color: #ffb74d; }
 
 #sidebar, #log {
   scrollbar-width: thin;
@@ -150,6 +155,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 /* Modal */
 #modal-overlay { position: fixed; left: 0; right: 340px; top: 0; bottom: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; z-index: 100; pointer-events: none; }
 #modal-overlay.hidden { display: none; }
+
 #modal-overlay.travel-modal { align-items: flex-start; justify-content: flex-start; padding-top: 70px; }
 #modal { background: var(--bg-panel); border: 1px solid var(--accent); border-radius: var(--radius); padding: 24px 28px; max-width: 460px; width: 90%; text-align: center; pointer-events: auto; }
 #modal-overlay.travel-modal #modal { margin: 16px; }
@@ -181,6 +187,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 #modal-body .travel-request.urg-contested .travel-request-header span { color: var(--danger); }
 #modal-body .travel-request-mission { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 4px; }
 #modal-body .travel-request-supplies { font-size: 0.82rem; color: var(--text); }
+.event-advisory { margin-top: 10px; padding: 7px 10px; border-radius: var(--radius); font-size: 0.82rem; line-height: 1.4; }
+.event-advisory.rough { background: rgba(255,152,0,0.1); border-left: 3px solid #ff9800; color: #ffb74d; }
+.event-advisory.calm { background: rgba(79,195,247,0.08); border-left: 3px solid var(--accent); color: var(--accent); }
+
 #modal-choices { display: flex; flex-direction: column; gap: 8px; }
 #modal-choices > button { padding: 8px 16px; border: 1px solid var(--accent); border-radius: var(--radius); background: transparent; color: var(--accent); cursor: pointer; font-size: 0.85rem; transition: background 0.2s; }
 #modal-choices > button:hover { background: var(--accent); color: var(--bg-dark); }

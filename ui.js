@@ -46,9 +46,9 @@ class UI {
       if (state.traveling) {
         const from = this.game.map.ports[state.travelFrom], to = this.game.map.ports[state.travelTo];
         const totalDays = state.travelElapsed + state.travelDaysRemaining;
-        const t = totalDays > 0 ? state.travelElapsed / totalDays : 0;
-        nx = from.nx + t * (to.nx - from.nx);
-        ny = from.ny + t * (to.ny - from.ny);
+        const progress = totalDays > 0 ? state.travelElapsed / totalDays : 0;
+        nx = from.nx + progress * (to.nx - from.nx);
+        ny = from.ny + progress * (to.ny - from.ny);
       } else {
         const port = this.game.map.ports[state.currentPort];
         nx = port.nx; ny = port.ny;
@@ -72,6 +72,13 @@ class UI {
     const state = this.game.state;
     if (state.traveling || state.gameOver) {
       this.els.actionsPanel.innerHTML = "";
+      return;
+    }
+    if (state.waiting) {
+      this.els.actionsPanel.innerHTML =
+        `<h2>Holding Position</h2>` +
+        `<div class="action-section"><div class="section-label">Waiting Out Weather</div>` +
+        `<p class="wait-note">Riding out the storm at ${this.game.map.ports[state.currentPort].name}. Holding until a lane reopens…</p></div>`;
       return;
     }
 
@@ -117,7 +124,7 @@ class UI {
       html += `<button class="btn-action btn-unload" onclick="game.unloadAll()">Unload All Cargo</button>`;
 
       // Quick load buttons for active requests
-      const active = this.game.requests.filter(r => r.status === "active");
+      const active = this.game.requests.filter(request => request.status === "active");
       if (active.length > 0) {
         html += `<div class="section-label" style="margin-top:8px">QUICK LOAD FOR REQUEST</div>`;
         for (const req of active) {
@@ -127,13 +134,48 @@ class UI {
       html += `</div>`;
     }
 
-    
+    // Navigation
+    const connected = this.game.map.getConnected(state.currentPort);
+    let anyStorm = false;
+    html += `<div class="action-section"><div class="section-label">NAVIGATE</div>`;
+    for (const { port: idx, days } of connected) {
+      const target = this.game.map.ports[idx];
+      const hasReq = this.game.getRequestsAtPort(idx).length > 0;
+      const isContested = this.game.isPortContested(idx);
+      const isStorm = !isContested && this.game.isRouteWeatherBlocked(state.currentPort, idx);
+      if (isStorm) anyStorm = true;
+
+      let badge = "";
+      if (isContested) {
+        badge = '<span class="nav-badge contested">CONTESTED</span>';
+      } else if (isStorm) {
+        badge = '<span class="nav-badge storm">STORM</span>';
+      } else if (target.type === "base") {
+        badge = '<span class="nav-badge base">BASE</span>';
+      } else if (hasReq) {
+        badge = '<span class="nav-badge request">REQ</span>';
+      }
+
+      const disabledAttr = (isContested || isStorm) ? "disabled" : "";
+      const daysText = isContested ? "Blocked" : isStorm ? "Storm" : `${days}d`;
+
+      html += `<button class="btn-nav" ${disabledAttr} onclick="game.startTravel(${idx})">` +
+        `<span>${target.name} ${badge}</span><span class="nav-days">${daysText}</span></button>`;
+    }
+
+    // Hold Position — wait out the storm; after a few days it breaks and seas subside.
+    if (anyStorm && this.game.isStranded()) {
+      html += `<p class="wait-note stranded">All lanes are impassable. Hold position to wait out the storm.</p>`;
+      html += `<button class="btn-action btn-hold" onclick="game.holdPosition()">⚓ Hold Position (wait out weather)</button>`;
+    }
+    html += `</div>`;
+
     this.els.actionsPanel.innerHTML = html;
   }
 
   _renderRequests() {
-    const active = this.game.requests.filter(r => r.status === "active" || r.status === "contested");
-    const recent = this.game.requests.filter(r => r.status === "fulfilled" || r.status === "expired").slice(-3);
+    const active = this.game.requests.filter(request => request.status === "active" || request.status === "contested");
+    const recent = this.game.requests.filter(request => request.status === "fulfilled" || request.status === "expired").slice(-3);
 
     let html = `<h2>Active Requests (${active.length})</h2>`;
     if (active.length === 0) html += `<div class="no-requests">No active requests</div>`;
@@ -171,10 +213,25 @@ class UI {
     this.els.requestsPanel.innerHTML = html;
   }
 
+  // Reads current sea state on the active leg and advises wait-vs-rush.
+  _weatherAdvisory(event, state) {
+    const weather = this.game.weather;
+    if (!weather || !weather.data || state.travelFrom == null || state.travelTo == null) return "";
+    const fromPort = this.game.map.ports[state.travelFrom];
+    const toPort = this.game.map.ports[state.travelTo];
+    const sea = weather.seaState(weather.routeResistance(fromPort, toPort, state.day));
+    const rec = (event.choices || []).find(choice => choice.posture === (sea.rough ? "cautious" : "bold"));
+    const advice = sea.rough
+      ? `seas are <b>${sea.label}</b> on this leg — better to wait it out or ease off`
+      : `seas are <b>${sea.label}</b> on this leg — good conditions to push ahead`;
+    const recLine = rec ? ` Ops recommends: <b>${rec.text}</b>.` : "";
+    return `<div class="event-advisory ${sea.rough ? "rough" : "calm"}">⚓ Advisory: ${advice}.${recLine}</div>`;
+  }
+
   showEvent(event, state) {
     return new Promise((resolve) => {
       this.els.modalTitle.textContent = event.name;
-      this.els.modalBody.textContent  = event.description;
+      this.els.modalBody.innerHTML = `<div>${event.description}</div>${this._weatherAdvisory(event, state)}`;
       this.els.modalChoices.innerHTML = "";
 
       event.choices.forEach((choice) => {
@@ -194,9 +251,9 @@ class UI {
         });
         const hints = document.createElement("div");
         hints.className = "choice-outcomes";
-        choice.outcomes.forEach(o => {
+        choice.outcomes.forEach(outcome => {
           const sp = document.createElement("span");
-          sp.textContent = `${o.chance}% — ${o.preview}`;
+          sp.textContent = `${outcome.chance}% — ${outcome.preview}`;
           hints.appendChild(sp);
         });
         div.append(btn, hints);
@@ -334,7 +391,7 @@ class UI {
   addLog(day, message, type = "neutral") {
     const li = document.createElement("li");
     li.textContent = `Day ${day}: ${message}`;
-    const cls = { bad: "event-bad", good: "event-good", port: "event-port" };
+    const cls = { bad: "event-bad", good: "event-good", port: "event-port", event: "event-incident" };
     if (cls[type]) li.classList.add(cls[type]);
     this.els.logEntries.prepend(li);
     while (this.els.logEntries.children.length > 40) this.els.logEntries.lastChild.remove();
@@ -372,7 +429,7 @@ class UI {
       `<li style="margin-bottom: 4px;"><b>Prevent Domino Effect</b>: If ports remain unsupplied in a high-need status, their urgency escalates. Critical ports will roll to become <b>CONTESTED</b>, blocking sea lanes until neighboring base nodes facilitate a recovery.</li>` +
       `</ul>` +
       `<p style="margin-bottom: 8px; font-weight: bold; color: var(--gold);">3. EXECUTION WINDOW</p>` +
-      `<p>Deliver maximum tonnage within <b>60 Days</b>. Hostile forces are monitoring. Good luck, Commander.</p>` +
+      `<p>Deliver maximum tonnage within <b>60 Days</b>. Hostile forces are monitoring. <br><br>Good luck, Commander.</p>` +
       `</div>`;
     this.els.modalChoices.innerHTML = "";
     const btn = document.createElement("button");
