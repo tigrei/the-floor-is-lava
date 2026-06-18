@@ -190,11 +190,17 @@ class Game {
 
   quickLoad(requestId) {
     const req = this.requests.find(r => r.id === requestId);
-    if (!req || req.status !== "active") return;
+    if (!req || req.status !== "active")
+      return;
+
     for (const [type, needed] of Object.entries(req.remaining)) {
+      const totalNeededAcrossRequests = this.requests.map(r => r.remaining[type] || 0).reduce((a, b) => a + b, 0);    
       const have = this.state.cargo[type] || 0;
-      const stillNeed = needed - have;
-      if (stillNeed > 0) this.loadCargo(type, stillNeed);
+      if (totalNeededAcrossRequests > have) {
+        const totalStillNeeded = totalNeededAcrossRequests - have;
+        const totalToLoad = Math.min(totalStillNeeded, needed);
+        this.loadCargo(type, totalToLoad);
+      }
     }
   }
 
