@@ -5,6 +5,16 @@ class Game {
     this.map = new GameMap("map-canvas");
     this.ui = new UI(this);
     this.holdPositionState = { active: false, daysLeft: null };
+    this.showWeatherOverlay = true;
+
+    const weatherToggle = document.getElementById("weather-toggle-input");
+    if (weatherToggle) {
+      this.showWeatherOverlay = weatherToggle.checked;
+      weatherToggle.addEventListener("change", (event) => {
+        this.showWeatherOverlay = event.target.checked;
+        this._updateWeatherOverlay();
+      });
+    }
 
     this.state = {
       day: 1,
@@ -482,8 +492,32 @@ class Game {
 
   _render() {
     this.map.render(this.state, this.getRequestPorts(), this.getContestedPorts(), this.getWeatherBlockedRoutes());
+    this._updateWeatherOverlay();
     document.getElementById("day-counter").textContent = `Day ${this.state.day}`;
     document.getElementById("score-display").innerHTML = `Delivered: ${this.score.fulfilled}&ensp;<span class="failed-section">Failed: ${this.score.failed}</span>`;
+  }
+
+  // Point the map's weather overlay at the SVG frame for the current scenario + day.
+  // Only updates the src when the frame actually changes (render runs on every click).
+  _updateWeatherOverlay() {
+    const overlay = document.getElementById("weather-overlay");
+    if (!overlay) return;
+    const path = this.weather.currentSvgPath(this.state.day);
+    if (!path || !this.showWeatherOverlay) { overlay.style.display = "none"; return; }
+    overlay.style.display = "block";
+    if (overlay.getAttribute("src") !== path) overlay.setAttribute("src", path);
+
+    const base = 0.5; // matches #weather-overlay base opacity in style.css
+    const hold = this.holdPositionState;
+    if (hold.active && hold.daysLeft != null) {
+      // Holding: fade the storm down one step per held day (3 → 2 → 1 → broken).
+      overlay.style.opacity = (base * hold.daysLeft / Game.MAX_WAIT_DAYS).toFixed(3);
+    } else if (this.weather.isCalmed(this.state.day)) {
+      // Storm broke from holding: ramp slowly from faded back to full over the calm window.
+      overlay.style.opacity = (base * this.weather.calmRecovery(this.state.day)).toFixed(3);
+    } else {
+      overlay.style.opacity = ""; // normal weather — fall back to CSS base opacity.
+    }
   }
 }
 
