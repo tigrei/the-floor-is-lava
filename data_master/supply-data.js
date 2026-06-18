@@ -17,22 +17,17 @@ const SUPPLY_TYPES = {
 };
 
 const REQUEST_TEMPLATES = [
-  { supplies: { "CARGO-013": 2, "CARGO-001": 1 }, mission: "Airfield damage repair — runway cratered by loitering munitions", urgencyPool: ["high"] },
-  { supplies: { "CARGO-019": 1, "CARGO-028": 2 }, mission: "Garrison water contaminated — emergency purification needed", urgencyPool: ["high"] },
-  { supplies: { "CARGO-033": 1, "CARGO-031": 1 }, mission: "Forward radar array needs comms upgrade and backup power", urgencyPool: ["medium", "high"] },
-  { supplies: { "CARGO-010": 1 }, mission: "Coastal road destroyed — temporary bridge for vehicle access", urgencyPool: ["medium"] },
-  { supplies: { "CARGO-004": 1, "CARGO-013": 1 }, mission: "Camp expansion — hardened shelters and field workshop", urgencyPool: ["low", "medium"] },
-  { supplies: { "CARGO-004": 1, "CARGO-030": 2 }, mission: "Forward medical facility — modular shelter with generators", urgencyPool: ["high"] },
-  { supplies: { "CARGO-006": 1, "CARGO-013": 1 }, mission: "Port facility repair — crane equipment and pier reinforcement", urgencyPool: ["medium"] },
-  { supplies: { "CARGO-034": 1 }, mission: "SIGINT station — antenna array and encrypted relay equipment", urgencyPool: ["low"] },
-  { supplies: { "CARGO-008": 2, "CARGO-032": 1 }, mission: "Ammunition bunker — hardened underground structure required", urgencyPool: ["medium", "high"] },
-  { supplies: { "CARGO-028": 1, "CARGO-029": 1, "CARGO-004": 1 }, mission: "Remote observation post — self-sufficient station deployment", urgencyPool: ["low", "medium"] },
-  { supplies: { "CARGO-031": 1, "CARGO-033": 1 }, mission: "Mobile command post — power grid and tactical comms array", urgencyPool: ["high"] },
-  { supplies: { "CARGO-027": 1 }, mission: "Coastal fortification — excavation equipment for earthworks", urgencyPool: ["medium", "high"] },
+  { mission: "Airfield damage repair — runway cratered by loitering munitions", supplies: { "CARGO-013": 10, "CARGO-001": 5 } },
+  { mission: "Garrison water contaminated — emergency purification needed", supplies: { "CARGO-019": 5, "CARGO-028": 5 } },
+  { mission: "Forward radar array needs comms upgrade and backup power", supplies: { "CARGO-033": 5, "CARGO-031": 5 } },
+  { mission: "Coastal road destroyed — temporary bridge for vehicle access", supplies: { "CARGO-010": 10 } },
+  { mission: "Camp expansion — hardened shelters and field workshop", supplies: { "CARGO-004": 5, "CARGO-013": 5 } },
+  { mission: "Forward medical facility — modular shelter with generators", supplies: { "CARGO-004": 10, "CARGO-030": 5 } },
+  { mission: "Port facility repair — crane equipment and pier reinforcement", supplies: { "CARGO-006": 5, "CARGO-013": 5 } },
+  { mission: "SIGINT station — antenna array and encrypted relay equipment", supplies: { "CARGO-034": 10 } },
+  { mission: "Ammunition bunker — hardened underground structure required", supplies: { "CARGO-008": 5, "CARGO-032": 5 } },
+  { mission: "Remote observation post — self-sufficient station deployment", supplies: { "CARGO-028": 10, "CARGO-029": 5, "CARGO-004": 15 } },
+  { mission: "Mobile command post — power grid and tactical comms array", supplies: { "CARGO-031": 5, "CARGO-033": 15 } },
+  { mission: "Coastal fortification — excavation equipment for earthworks", supplies: { "CARGO-027": 15 } },
 
-  // Critical-urgency missions: site is actively under attack, deadline window is tightest.
-  { supplies: { "CARGO-032": 2, "CARGO-030": 1 }, mission: "UNDER ATTACK: garrison pinned down, ammunition and medical resupply needed immediately", urgencyPool: ["critical"] },
-  { supplies: { "CARGO-033": 1, "CARGO-032": 1 }, mission: "UNDER ATTACK: comms array destroyed mid-engagement, emergency relay and ammo needed", urgencyPool: ["critical"] },
-  { supplies: { "CARGO-030": 2 }, mission: "UNDER ATTACK: casualties mounting, forward medical resupply needed before position is overrun", urgencyPool: ["critical"] },
-  { supplies: { "CARGO-031": 1, "CARGO-032": 1 }, mission: "UNDER ATTACK: generators down under fire, fuel and ammunition needed to hold the line", urgencyPool: ["critical"] },
 ];
