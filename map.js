@@ -24,13 +24,8 @@ class GameMap {
         inventory: { "CARGO-010": 4, "CARGO-013": 30, "CARGO-001": 30, "CARGO-006": 20, "CARGO-028": 20, "CARGO-004": 5, "CARGO-033": 5 } 
       },
       { name: "Okinawa",      nx: 0.64, ny: 0.47, type: "site" },
-<<<<<<< HEAD
       { name: "Kunsan",  nx: 0.63, ny: 0.08, type: "base",
         inventory: { "CARGO-013": 3, "CARGO-008": 30, "CARGO-028": 30, "CARGO-033": 25, "CARGO-010": 5, "CARGO-004": 15, "CARGO-001": 5} ,
-=======
-      { name: "Kunsan",       nx: 0.63, ny: 0.08, type: "base",
-        inventory: { construction: 25, heavy: 40, tools: 15, bridging: 30, shelter: 20, power: 25, comms: 30, water: 35}
->>>>>>> 9239f05 (update starting port and bugfixes)
        },
       { name: "Batanes",      nx: 0.42, ny: 0.57, type: "site" },
       { name: "Subic Bay",    nx: 0.35, ny: 0.70, type: "base",
@@ -41,7 +36,8 @@ class GameMap {
         inventory: { "CARGO-013": 5, "CARGO-001": 5, "CARGO-006": 15, "CARGO-004": 30, "CARGO-027": 25, "CARGO-010": 10, "CARGO-034": 10, "CARGO-028": 15 }
       },
       { name: "Camilo Osias", nx: 0.45, ny: 0.86, type: "site"},
-      { name: "Kyogamisaki",  nx: 0.87, ny: 0.0, type: "site" }
+      { name: "Kyogamisaki",  nx: 0.87, ny: 0.0, type: "site" },
+      { name: "Mujuk",        nx: 0.67, ny: 0.036, type: "site" }
     ];
 
     this.connections = [
@@ -54,7 +50,8 @@ class GameMap {
       [4, 2, 2],
       [1, 3, 1],
       [8, 4, 2], [8, 5, 2],
-      [9, 3, 2]
+      [9, 3, 2],
+      [10, 3, 1], [10, 9, 2]
     ];
 
     this._resize();
