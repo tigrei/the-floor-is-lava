@@ -111,7 +111,7 @@ class Game {
 
         const selectedMaterials = randomize(materials)
         const logOutput = selectedMaterials.map(material => {
-          return `\t- ${material}`
+          return `\t-${material}`
         }).join('\n')
 
         selectedMaterials.forEach((material) => {
