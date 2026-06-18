@@ -9,7 +9,7 @@ class GameMap {
     this.bgImage.onload = () => {
       this.bgLoaded = true;
       if (this.lastShipState && this.lastRequestPorts) {
-        this.render(this.lastShipState, this.lastRequestPorts);
+        this.render(this.lastShipState, this.lastRequestPorts, this.lastContestedPorts);
       }
     };
 
@@ -56,7 +56,7 @@ class GameMap {
     this.canvas.width  = rect.width;
     this.canvas.height = rect.height;
     if (this.lastShipState && this.lastRequestPorts) {
-      this.render(this.lastShipState, this.lastRequestPorts);
+      this.render(this.lastShipState, this.lastRequestPorts, this.lastContestedPorts);
     }
   }
 
@@ -84,9 +84,10 @@ class GameMap {
     return null;
   }
 
-  render(shipState, requestPorts) {
+  render(shipState, requestPorts, contestedPorts) {
     this.lastShipState = shipState;
     this.lastRequestPorts = requestPorts;
+    this.lastContestedPorts = contestedPorts;
 
     const { ctx, canvas } = this;
     if (this.bgLoaded) {
@@ -115,8 +116,9 @@ class GameMap {
       for (const { port: idx, days } of connected) {
         const pa = this._toPixel(this.ports[shipState.currentPort].nx, this.ports[shipState.currentPort].ny);
         const pb = this._toPixel(this.ports[idx].nx, this.ports[idx].ny);
+        const isTargetContested = contestedPorts && contestedPorts.has(idx);
         ctx.beginPath();
-        ctx.strokeStyle = "rgba(79,195,247,0.35)";
+        ctx.strokeStyle = isTargetContested ? "rgba(239,83,80,0.45)" : "rgba(79,195,247,0.35)";
         ctx.lineWidth = 2;
         ctx.setLineDash([6, 4]);
         ctx.moveTo(pa.x, pa.y);
@@ -124,10 +126,10 @@ class GameMap {
         ctx.stroke();
         ctx.setLineDash([]);
         const mx = (pa.x + pb.x) / 2, my = (pa.y + pb.y) / 2;
-        ctx.fillStyle = "#7a8ba0";
+        ctx.fillStyle = isTargetContested ? "#ef5350" : "#7a8ba0";
         ctx.font = "10px 'Segoe UI', sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(`${days}d`, mx, my - 5);
+        ctx.fillText(isTargetContested ? "Blocked" : `${days}d`, mx, my - 5);
       }
     }
 
@@ -146,9 +148,14 @@ class GameMap {
       const port = this.ports[i];
       const p = this._toPixel(port.nx, port.ny);
       const isBase = port.type === "base";
-      const hasReq = requestPorts.has(i);
+      const hasReq = requestPorts && requestPorts.has(i);
+      const isContested = contestedPorts && contestedPorts.has(i);
       const isCurrent = shipState.currentPort === i;
-      const color = isBase ? "#4fc3f7" : (hasReq ? "#ffd54f" : "#556070");
+      
+      let color = isBase ? "#4fc3f7" : (hasReq ? "#ffd54f" : "#556070");
+      if (isContested) {
+        color = "#ef5350";
+      }
 
       ctx.beginPath();
       ctx.arc(p.x, p.y, isBase ? 11 : 8, 0, Math.PI * 2);
@@ -179,6 +186,10 @@ class GameMap {
         ctx.font = "8px 'Segoe UI', sans-serif";
         ctx.fillStyle = "rgba(79,195,247,0.4)";
         ctx.fillText("BASE", p.x, p.y + 20);
+      } else if (isContested) {
+        ctx.font = "bold 8px 'Segoe UI', sans-serif";
+        ctx.fillStyle = "rgba(239,83,80,0.8)";
+        ctx.fillText("CONTESTED", p.x, p.y + 18);
       }
     }
 
