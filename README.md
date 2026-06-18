@@ -1,3 +1,23 @@
+Weather Feature: 
+
+Summary: A matrix ocean simulation with 11 evolving weather states (calm to typhoons) driven by wind, waves, swell, and drag; producing a real-time resistance field that directly affects ships and delivery 
+
+------
+Weather Highlight 
+World: 50×50 dynamic ocean grid
+Scenarios: 11 weather states (calm → extreme typhoon) - different levels of turbulance 
+Simulation: 18 time steps per scenario (continuous evolution over ~3 minutes)
+Physics systems: wind force, wave energy transfer, swell diffusion, and drag resistance
+
+This resistance is sampled in real time by the game’s routing and movement systems, dynamically affecting:
+
+ship speed and fuel consumption
+optimal pathfinding and rerouting decisions
+risk exposure and damage probability
+tactical decision-making during storms
+
+
+
 # First Island Chain: Gray Zone Operations
 
 A browser-based JavaScript wargaming scenario game, set in the high-tension "Gray Zone" of the Philippine Sea, South China Sea, and Taiwan Strait.
