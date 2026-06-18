@@ -14,12 +14,14 @@
       <div id="controls">
         <span id="day-counter">Day 1</span>
         <span id="score-display">Delivered: 0&ensp;<span class="failed-section">Failed: 0</span></span>
+        <label id="weather-toggle"><input type="checkbox" id="weather-toggle-input" checked> Weather</label>
       </div>
     </header>
 
     <div id="main">
       <section id="map-area">
         <canvas id="map-canvas"></canvas>
+        <img id="weather-overlay" alt="" aria-hidden="true">
       </section>
 
       <aside id="sidebar">

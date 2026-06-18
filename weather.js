@@ -33,17 +33,40 @@ class WeatherSystem {
     return this.label;
   }
 
+  _frameIndex(day) {
+    const n = this.data.n_frames;
+    return Math.max(0, Math.min(n - 1, Math.floor((day - 1) * n / 60)));
+  }
+
   _frame(day) {
     if (!this.data) return null;
-    const n = this.data.n_frames;
     const dt = this.data.dt_seconds || 10;
-    const frameIndex = Math.max(0, Math.min(n - 1, Math.floor((day - 1) * n / 60)));
-    return this.data.frames[String(frameIndex * dt)];
+    return this.data.frames[String(this._frameIndex(day) * dt)];
+  }
+
+  // Path to the SVG vector-field frame for the current scenario + day (for the map overlay).
+  currentSvgPath(day) {
+    if (!this.data) return null;
+    const seconds = this._frameIndex(day) * (this.data.dt_seconds || 10);
+    return `svgs/${this.data.scenario}_${String(seconds).padStart(3, "0")}s.svg`;
   }
 
   // Force the storm to break: seas stay calm through CALM_DURATION_DAYS from now.
   calm(currentDay) {
     this.calmUntilDay = currentDay + WeatherSystem.CALM_DURATION_DAYS;
+  }
+
+  // True while the storm is "broken" by waiting — used to fade the map overlay.
+  isCalmed(day) {
+    return this.data != null && day <= this.calmUntilDay;
+  }
+
+  // 0 right when the storm breaks, ramping to 1 as the calm window expires —
+  // drives the overlay slowly returning from faded to full after a hold.
+  calmRecovery(day) {
+    if (!this.isCalmed(day)) return 1;
+    const start = this.calmUntilDay - WeatherSystem.CALM_DURATION_DAYS;
+    return Math.max(0, Math.min(1, (day - start) / WeatherSystem.CALM_DURATION_DAYS));
   }
 
   // Resistance (0..1) at a normalized canvas position on a given day.
