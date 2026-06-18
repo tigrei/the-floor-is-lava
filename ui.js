@@ -137,7 +137,7 @@ class UI {
 
     for (const req of active) {
       const isCont = req.status === "contested";
-      const urgClass = isCont ? "urg-contested" : (req.urgency === "high" ? "urg-high" : (req.urgency === "medium" ? "urg-med" : "urg-low"));
+      const urgClass = isCont ? "urg-contested" : (req.urgency === "critical" || req.urgency === "high" ? "urg-high" : (req.urgency === "medium" ? "urg-med" : "urg-low"));
       
       let badgeText = isCont ? "CONTESTED" : req.urgency.toUpperCase();
       let supplyList = isCont 
@@ -146,7 +146,7 @@ class UI {
       
       let deadlineText = isCont
         ? `Recovery ETA: ${req.stageDaysLeft} days (-${1 + this.game._getSuppliedNeighborsCount(req.destination)}d/d)`
-        : `Deadline: Day ${this.game.state.day + req.stageDaysLeft} (${req.stageDaysLeft}d left)`;
+        : (req.urgency === "critical" ? `Status: AT RISK (Rolls daily for Contested)` : `Deadline: Day ${this.game.state.day + req.stageDaysLeft} (${req.stageDaysLeft}d left)`);
 
       html += `<div class="request-card ${urgClass}">` +
         `<div class="req-header"><span class="req-dest">${req.destinationName}</span>` +

@@ -258,22 +258,30 @@ class Game {
       if (req.status !== "active" && req.status !== "contested") continue;
 
       if (req.status === "active") {
-        req.stageDaysLeft--;
-        if (req.stageDaysLeft <= 0) {
-          if (req.urgency === "low") {
-            req.urgency = "medium";
-            req.stageDaysLeft = 8;
-            this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now MEDIUM urgency.`, "neutral");
-          } else if (req.urgency === "medium") {
-            req.urgency = "high";
-            req.stageDaysLeft = 6;
-            this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now HIGH urgency!`, "bad");
-          } else if (req.urgency === "high") {
+        if (req.urgency === "critical") {
+          // Roll chance each day to become contested
+          if (Math.random() < 0.20) {
             req.status = "contested";
             req.urgency = "contested";
             req.stageDaysLeft = 12; // Base 12 days to recover
-            this.score.failed++; // Counts as a failure/incident
+            this.score.failed++; // Counts as an incident/failure
             this.ui.addLog(this.state.day, `CRITICAL: ${req.destinationName} is now CONTESTED! Sea lanes blocked.`, "bad");
+          }
+        } else {
+          req.stageDaysLeft--;
+          if (req.stageDaysLeft <= 0) {
+            if (req.urgency === "low") {
+              req.urgency = "medium";
+              req.stageDaysLeft = 8;
+              this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now MEDIUM urgency.`, "neutral");
+            } else if (req.urgency === "medium") {
+              req.urgency = "high";
+              req.stageDaysLeft = 6;
+              this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now HIGH urgency!`, "bad");
+            } else if (req.urgency === "high") {
+              req.urgency = "critical";
+              this.ui.addLog(this.state.day, `CRITICAL: Request at ${req.destinationName} is now CRITICAL. Port is at risk!`, "bad");
+            }
           }
         }
       } else if (req.status === "contested") {
