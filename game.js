@@ -2,6 +2,11 @@ class Game {
   constructor() {
     this.map = new GameMap("map-canvas");
     this.ui = new UI(this);
+    this.holdPositionBtn = document.getElementById("hold-position-btn");
+    this.holdPositionDefaultLabel = this.holdPositionBtn?.textContent || "Hold Position (2d)";
+    if (this.holdPositionBtn) {
+      this.holdPositionBtn.addEventListener("click", () => this.holdPosition(2));
+    }
 
     this.state = {
       day: 1,
@@ -99,17 +104,58 @@ class Game {
   }
 
   async _doTick() {
+    await this._advanceDay({ scheduleNext: true });
+  }
+
+  async holdPosition(days = 2) {
+    if (this.state.traveling || this.state.gameOver) return;
+    if (this.holdPositionBtn) {
+      this.holdPositionBtn.disabled = true;
+      this.holdPositionBtn.classList.add("is-holding");
+    }
+
+    try {
+      for (let i = 0; i < days; i++) {
+        if (this.state.gameOver || this.state.traveling) break;
+        this._setHoldPositionLabel(days - i);
+        await this._sleep(1100);
+        await this._advanceDay({ scheduleNext: false, allowEvents: false });
+      }
+    } finally {
+      if (this.holdPositionBtn) {
+        this.holdPositionBtn.classList.remove("is-holding");
+        this.holdPositionBtn.disabled = this.state.traveling || this.state.gameOver;
+        this._setHoldPositionLabel();
+      }
+    }
+  }
+
+  _sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  _setHoldPositionLabel(daysLeft = null) {
+    if (!this.holdPositionBtn) return;
+    this.holdPositionBtn.textContent = daysLeft === null
+      ? this.holdPositionDefaultLabel
+      : `Holding... ${daysLeft}d left`;
+  }
+
+  async _advanceDay({ scheduleNext = false, allowEvents = true } = {}) {
     const state = this.state;
+    const wasTraveling = state.traveling;
     state.day++;
-    state.travelElapsed++;
-    state.travelDaysRemaining = Math.max(0, state.travelDaysRemaining - 1);
+    if (wasTraveling) {
+      state.travelElapsed++;
+      state.travelDaysRemaining = Math.max(0, state.travelDaysRemaining - 1);
+    }
 
     this._checkDeadlines();
     this._maybeGenerateRequest();
     this._render();
     this.ui.renderSidebar();
 
-    if (shouldEventTrigger()) {
+    if (allowEvents && shouldEventTrigger()) {
       const event = getRandomEvent();
       const message = await this.ui.showEvent(event, state);
       this.ui.addLog(state.day, message, "neutral");
@@ -151,7 +197,7 @@ class Game {
       })
     }
 
-    if (state.travelDaysRemaining <= 0) {
+    if (wasTraveling && state.travelDaysRemaining <= 0) {
       state.traveling = false;
       state.currentPort = state.travelTo;
       state.travelFrom = null;
@@ -167,7 +213,7 @@ class Game {
       return;
     }
 
-    this._scheduleTick();
+    if (scheduleNext) this._scheduleTick();
   }
 
   // --- Cargo ---
@@ -402,6 +448,7 @@ class Game {
     this.map.render(this.state, this.getRequestPorts(), this.getContestedPorts(), this.getWeatherBlockedRoutes());
     document.getElementById("day-counter").textContent = `Day ${this.state.day}`;
     document.getElementById("score-display").innerHTML = `Delivered: ${this.score.fulfilled}&ensp;<span class="failed-section">Failed: ${this.score.failed}</span>`;
+    if (this.holdPositionBtn) this.holdPositionBtn.disabled = this.state.traveling || this.state.gameOver;
   }
 }
 

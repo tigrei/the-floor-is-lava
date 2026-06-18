@@ -23,6 +23,42 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 #day-counter, #score-display { color: var(--text-muted); font-size: 0.9rem; }
 #score-display { color: var(--success); font-weight: 600; }
 .failed-section { color: var(--danger); font-weight: 600; }
+#hold-position-btn {
+  appearance: none;
+  font: inherit;
+  padding: 7px 10px;
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.02);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+#hold-position-btn:hover:not(:disabled) {
+  background: rgba(79,195,247,0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+#hold-position-btn.is-holding {
+  background: rgba(79,195,247,0.14);
+  border-color: var(--accent);
+  color: var(--accent);
+  opacity: 1;
+  cursor: wait;
+  box-shadow: 0 0 0 1px rgba(79,195,247,0.15), 0 0 14px rgba(79,195,247,0.18);
+  animation: holdPulse 0.9s ease-in-out infinite;
+}
+#hold-position-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@keyframes holdPulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
 
 /* Layout */
 #main { display: flex; flex: 1; overflow: hidden; }
