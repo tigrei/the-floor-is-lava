@@ -33,6 +33,44 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 #sidebar { width: 340px; background: var(--bg-panel); border-left: 1px solid var(--accent-dim); display: flex; flex-direction: column; overflow-y: auto; }
 #sidebar > div { padding: 14px 16px; border-bottom: 1px solid rgba(79,195,247,0.08); }
 #sidebar h2 { font-size: 0.95rem; color: var(--accent); margin-bottom: 10px; }
+.ship-status-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+#hold-position-btn {
+  appearance: none;
+  font: inherit;
+  padding: 5px 9px;
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.02);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+#hold-position-btn:hover:not(:disabled) {
+  background: rgba(79,195,247,0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+#hold-position-btn.is-holding {
+  background: rgba(79,195,247,0.14);
+  border-color: var(--accent);
+  color: var(--accent);
+  opacity: 1;
+  cursor: wait;
+  box-shadow: 0 0 0 1px rgba(79,195,247,0.15), 0 0 14px rgba(79,195,247,0.18);
+  animation: holdPulse 0.9s ease-in-out infinite;
+}
+#hold-position-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@keyframes holdPulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px); }
+}
 
 /* Ship Status */
 .ship-location-container { margin-bottom: 12px; }
