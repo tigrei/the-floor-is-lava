@@ -299,7 +299,7 @@ class GameMap {
         (r.status === "active" || r.status === "contested") && r.destination === index
       );
       game.ui.showTravelConfirm({
-        portName: port.name,
+        port,
         days: travelDays,
         inventory: targetInventory,
         requests: requestsAtPort,

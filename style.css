@@ -107,10 +107,15 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 #log-entries li.event-port { border-color: var(--gold); }
 
 /* Modal */
-#modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; }
+#modal-overlay { position: fixed; left: 0; right: 340px; top: 0; bottom: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; z-index: 100; pointer-events: none; }
 #modal-overlay.hidden { display: none; }
-#modal { background: var(--bg-panel); border: 1px solid var(--accent); border-radius: var(--radius); padding: 24px 28px; max-width: 460px; width: 90%; text-align: center; }
-#modal h2 { color: var(--accent); margin-bottom: 10px; font-size: 1.1rem; }
+#modal-overlay.travel-modal { align-items: flex-start; justify-content: flex-start; padding-top: 70px; }
+#modal { background: var(--bg-panel); border: 1px solid var(--accent); border-radius: var(--radius); padding: 24px 28px; max-width: 460px; width: 90%; text-align: center; pointer-events: auto; }
+#modal-overlay.travel-modal #modal { margin: 16px; }
+#modal { position: relative; }
+#modal .modal-close { position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--accent); font-size: 1.8rem; cursor: pointer; padding: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
+#modal .modal-close:hover { color: var(--text); }
+#modal h2 { color: var(--accent); margin-bottom: 10px; font-size: 1.1rem; padding-right: 36px; }
 #modal h2.modal-title-contested { color: var(--danger); }
 #modal h2 .modal-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; font-weight: 400; }
 #modal h2 .modal-subtitle.contested { color: var(--danger); font-weight: 700; }

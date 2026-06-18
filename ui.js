@@ -181,15 +181,40 @@ class UI {
     });
   }
 
-  showTravelConfirm({ portName, days, inventory, requests, isContested, isNeighbor, onConfirm }) {
+  showTravelConfirm({ port, days, inventory, requests, isContested, isNeighbor, onConfirm }) {
     const daysLabel = days === 1 ? "1 day" : `${days} days`;
-    this.els.modalTitle.textContent = portName;
+    this.els.modalTitle.textContent = port.name;
+    
+    // Add close button
+    let closeBtn = this.els.modalTitle.querySelector(".modal-close");
+    if (!closeBtn) {
+      closeBtn = document.createElement("button");
+      closeBtn.className = "modal-close";
+      closeBtn.textContent = "×";
+      closeBtn.addEventListener("click", () => this.hideModal());
+      this.els.modalTitle.appendChild(closeBtn);
+    }
+    
     if (isContested) {
-      this.els.modalTitle.innerHTML += `<div class="modal-subtitle contested">Warning: cannot travel to contested port.</div>`;
+      this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle contested">Warning: cannot travel to contested port.</div>`);
     } else if (!isNeighbor) {
-      this.els.modalTitle.innerHTML += `<div class="modal-subtitle">Direct travel not available from current port.</div>`;
+      this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle">Direct travel not available from current port.</div>`);
     }
     this.els.modalTitle.classList.toggle("modal-title-contested", isContested);
+    
+    // Add travel-modal class to position in top-left
+    this.els.overlay.classList.add("travel-modal");
+
+    let portDetailsHtml;
+    let detailsLines = [];
+    if (port.wpi?.harborType) detailsLines.push(`Harbor Type: ${port.wpi.harborType}`);
+    if (port.wpi?.harborSize) detailsLines.push(`Harbor Size: ${port.wpi.harborSize}`);
+    if (port.wpi?.channelDepthM) detailsLines.push(`Channel Depth: ${port.wpi.channelDepthM} M`);
+    if (port.wpi?.anchorageDepthM) detailsLines.push(`Anchorage Depth: ${port.wpi.anchorageDepthM} M`);
+    
+    portDetailsHtml = detailsLines.length > 0 
+      ? `<div class="travel-section"><strong>Port Details:</strong> ${detailsLines.join("<br/>")}</div>`
+      : "";
 
     let inventoryHtml;
     if (isContested) {
@@ -219,7 +244,8 @@ class UI {
       : "<div class=\"travel-section\"><strong>Requests at destination:</strong> None</div>";
 
     this.els.modalBody.innerHTML =
-      `${(isNeighbor && !isContested) ? `<div class="travel-summary">Set sail to ${portName}? Estimated travel time: ${daysLabel}.</div>` : ""}` +
+      `${(isNeighbor && !isContested) ? `<div class="travel-summary">Set sail to ${port.name}? Estimated travel time: ${daysLabel}.</div>` : ""}` +
+      `${portDetailsHtml}` +
       `${inventoryHtml}` +
       `${requestHtml}`;
 
@@ -235,15 +261,15 @@ class UI {
       this.els.modalChoices.appendChild(travelBtn);
     }
 
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Close";
-    closeBtn.addEventListener("click", () => this.hideModal());
-
-    this.els.modalChoices.appendChild(closeBtn);
     this.els.overlay.classList.remove("hidden");
   }
 
-  hideModal() { this.els.overlay.classList.add("hidden"); }
+  hideModal() {
+    const closeBtn = this.els.modalTitle.querySelector(".modal-close");
+    if (closeBtn) closeBtn.remove();
+    this.els.overlay.classList.remove("travel-modal");
+    this.els.overlay.classList.add("hidden");
+  }
 
   showToast(message, type = "notif", duration = 3500) {
     this._clearToastTimeout();
