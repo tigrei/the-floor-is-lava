@@ -101,7 +101,7 @@ class GameMap {
       const isWeatherBlocked = weatherBlockedRoutes && weatherBlockedRoutes.has(routeKey);
       ctx.beginPath();
       ctx.strokeStyle = isWeatherBlocked ? "rgba(255,152,0,0.25)" : "rgba(133, 197, 224, 0.28)";
-      ctx.lineWidth = isWeatherBlocked ? 2 : 2;
+      ctx.lineWidth = isWeatherBlocked ? 3 : 2;
       ctx.moveTo(pa.x, pa.y);
       ctx.lineTo(pb.x, pb.y);
       ctx.stroke();
