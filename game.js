@@ -369,7 +369,7 @@ class Game {
   _render() {
     this.map.render(this.state, this.getRequestPorts(), this.getContestedPorts());
     document.getElementById("day-counter").textContent = `Day ${this.state.day}`;
-    document.getElementById("score-display").textContent = `Delivered: ${this.score.fulfilled}/${this.score.totalRequests}`;
+    document.getElementById("score-display").innerHTML = `Delivered: ${this.score.fulfilled}&ensp;<span class="failed-section">Failed: ${this.score.failed}</span>`;
   }
 }
 
