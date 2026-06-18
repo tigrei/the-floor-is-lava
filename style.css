@@ -98,13 +98,40 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 .req-failed { color: var(--danger); }
 
 /* Ops Log */
-#log { flex: 1; overflow-y: auto; }
+#log { flex: 1; overflow-y: auto; min-height: 300px; }
 #log h3 { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
 #log-entries { list-style: none; display: flex; flex-direction: column; gap: 4px; }
 #log-entries li { font-size: 0.75rem; color: var(--text-muted); border-left: 2px solid var(--accent-dim); padding-left: 8px; line-height: 1.3; }
 #log-entries li.event-bad { border-color: var(--danger); }
 #log-entries li.event-good { border-color: var(--success); }
 #log-entries li.event-port { border-color: var(--gold); }
+
+#sidebar, #log {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-dim) var(--bg-header);
+}
+
+#sidebar::-webkit-scrollbar,
+#log::-webkit-scrollbar {
+  width: 10px;
+}
+
+#sidebar::-webkit-scrollbar-track,
+#log::-webkit-scrollbar-track {
+  background: var(--bg-header);
+}
+
+#sidebar::-webkit-scrollbar-thumb,
+#log::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent-dim), var(--accent));
+  border-radius: 999px;
+  border: 2px solid var(--bg-header);
+}
+
+#sidebar::-webkit-scrollbar-thumb:hover,
+#log::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--accent), var(--gold));
+}
 
 /* Modal */
 #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; }
