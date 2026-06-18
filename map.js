@@ -100,8 +100,8 @@ class GameMap {
       const routeKey = `${Math.min(a, b)}-${Math.max(a, b)}`;
       const isWeatherBlocked = weatherBlockedRoutes && weatherBlockedRoutes.has(routeKey);
       ctx.beginPath();
-      ctx.strokeStyle = isWeatherBlocked ? "rgba(255,152,0,0.25)" : "rgba(79,195,247,0.12)";
-      ctx.lineWidth = isWeatherBlocked ? 2 : 1;
+      ctx.strokeStyle = isWeatherBlocked ? "rgba(255,152,0,0.25)" : "rgba(133, 197, 224, 0.28)";
+      ctx.lineWidth = isWeatherBlocked ? 2 : 2;
       ctx.moveTo(pa.x, pa.y);
       ctx.lineTo(pb.x, pb.y);
       ctx.stroke();
@@ -115,12 +115,12 @@ class GameMap {
         const routeKey = `${Math.min(shipState.currentPort, idx)}-${Math.max(shipState.currentPort, idx)}`;
         const isTargetContested = contestedPorts && contestedPorts.has(idx);
         const isStormBlocked = weatherBlockedRoutes && weatherBlockedRoutes.has(routeKey);
-        const lineColor = isTargetContested ? "rgba(239,83,80,0.45)" : isStormBlocked ? "rgba(255,152,0,0.55)" : "rgba(79,195,247,0.35)";
+        const lineColor = isTargetContested ? "rgba(239,83,80,0.45)" : isStormBlocked ? "rgba(255,152,0,0.55)" : "rgba(0, 134, 196, 0.96)";
         const labelColor = isTargetContested ? "#ef5350" : isStormBlocked ? "#ff9800" : "#7a8ba0";
         const labelText = isTargetContested ? "Blocked" : isStormBlocked ? "Storm" : `${days}d`;
         ctx.beginPath();
         ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 4;
         ctx.setLineDash([6, 4]);
         ctx.moveTo(pa.x, pa.y);
         ctx.lineTo(pb.x, pb.y);
