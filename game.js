@@ -221,6 +221,19 @@ class Game {
     this.ui.renderSidebar();
   }
 
+  unloadCargo(type, amount) {
+    const port = this.map.ports[this.state.currentPort];
+    if (!port || port.type !== "base") return;
+    const have = this.state.cargo[type] || 0;
+    const actual = Math.min(amount, have);
+    if (actual <= 0) return;
+    port.inventory[type] = (port.inventory[type] || 0) + actual;
+    this.state.cargo[type] -= actual;
+    if (this.state.cargo[type] <= 0) delete this.state.cargo[type];
+    this._render();
+    this.ui.renderSidebar();
+  }
+
   unloadAll() {
     const port = this.map.ports[this.state.currentPort];
     if (!port || port.type !== "base") return;
