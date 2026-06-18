@@ -2,11 +2,7 @@ class Game {
   constructor() {
     this.map = new GameMap("map-canvas");
     this.ui = new UI(this);
-    this.holdPositionBtn = document.getElementById("hold-position-btn");
-    this.holdPositionDefaultLabel = this.holdPositionBtn?.textContent || "Hold Position (2d)";
-    if (this.holdPositionBtn) {
-      this.holdPositionBtn.addEventListener("click", () => this.holdPosition(2));
-    }
+    this.holdPositionState = { active: false, daysLeft: null };
 
     this.state = {
       day: 1,
@@ -109,36 +105,30 @@ class Game {
 
   async holdPosition(days = 2) {
     if (this.state.traveling || this.state.gameOver) return;
-    if (this.holdPositionBtn) {
-      this.holdPositionBtn.disabled = true;
-      this.holdPositionBtn.classList.add("is-holding");
-    }
+    this.holdPositionState.active = true;
+    this.holdPositionState.daysLeft = days;
+    this._render();
+    this.ui.renderSidebar();
 
     try {
       for (let i = 0; i < days; i++) {
         if (this.state.gameOver || this.state.traveling) break;
-        this._setHoldPositionLabel(days - i);
+        this.holdPositionState.daysLeft = days - i;
+        this._render();
+        this.ui.renderSidebar();
         await this._sleep(1100);
         await this._advanceDay({ scheduleNext: false, allowEvents: false });
       }
     } finally {
-      if (this.holdPositionBtn) {
-        this.holdPositionBtn.classList.remove("is-holding");
-        this.holdPositionBtn.disabled = this.state.traveling || this.state.gameOver;
-        this._setHoldPositionLabel();
-      }
+      this.holdPositionState.active = false;
+      this.holdPositionState.daysLeft = null;
+      this._render();
+      this.ui.renderSidebar();
     }
   }
 
   _sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  _setHoldPositionLabel(daysLeft = null) {
-    if (!this.holdPositionBtn) return;
-    this.holdPositionBtn.textContent = daysLeft === null
-      ? this.holdPositionDefaultLabel
-      : `Holding... ${daysLeft}d left`;
   }
 
   async _advanceDay({ scheduleNext = false, allowEvents = true } = {}) {
@@ -448,7 +438,6 @@ class Game {
     this.map.render(this.state, this.getRequestPorts(), this.getContestedPorts(), this.getWeatherBlockedRoutes());
     document.getElementById("day-counter").textContent = `Day ${this.state.day}`;
     document.getElementById("score-display").innerHTML = `Delivered: ${this.score.fulfilled}&ensp;<span class="failed-section">Failed: ${this.score.failed}</span>`;
-    if (this.holdPositionBtn) this.holdPositionBtn.disabled = this.state.traveling || this.state.gameOver;
   }
 }
 
