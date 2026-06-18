@@ -117,6 +117,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 #modal .modal-close:hover { color: var(--text); }
 #modal h2 { color: var(--accent); margin-bottom: 10px; font-size: 1.1rem; padding-right: 36px; }
 #modal h2.modal-title-contested { color: var(--danger); }
+.port-type-tag { display: inline-block; font-size: 0.65rem; padding: 1px 5px; border-radius: 3px; margin-left: 6px; font-weight: 600; }
+.port-type-tag.base { background: rgba(79,195,247,0.2); color: var(--accent); }
+.port-type-tag.site { background: rgba(255,213,79,0.2); color: var(--gold); }
 #modal h2 .modal-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; font-weight: 400; }
 #modal h2 .modal-subtitle.contested { color: var(--danger); font-weight: 700; }
 #modal-body { color: var(--text); margin-bottom: 16px; line-height: 1.5; font-size: 0.9rem; text-align: left; }
@@ -124,11 +127,17 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 #modal-body .travel-warning { margin-bottom: 10px; color: var(--danger); font-weight: 700; }
 #modal-body .travel-section { margin-bottom: 10px; font-size: 0.85rem; }
 #modal-body .travel-section strong { display: block; margin-bottom: 4px; color: var(--text); }
-#modal-body .travel-request { padding: 8px 10px; margin: 6px 0; border-radius: var(--radius); background: rgba(255,255,255,0.04); border: 1px solid rgba(79,195,247,0.12); }
-#modal-body .travel-request.contested { background: rgba(239,83,80,0.08); border-color: rgba(239,83,80,0.2); }
+#modal-body .travel-request { padding: 8px 10px; margin: 6px 0; border-radius: var(--radius); background: rgba(255,255,255,0.04); border-left: 3px solid rgba(79,195,247,0.12); }
+#modal-body .travel-request.urg-high { border-left-color: var(--danger); background: rgba(239,83,80,0.08); }
+#modal-body .travel-request.urg-med { border-left-color: var(--gold); background: rgba(255,213,79,0.08); }
+#modal-body .travel-request.urg-low { border-left-color: var(--accent); background: rgba(79,195,247,0.08); }
+#modal-body .travel-request.urg-contested { border-left-color: var(--danger); background: rgba(239,83,80,0.08); border-left-style: dashed; }
 #modal-body .travel-request-header { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 0.78rem; font-weight: 700; }
 #modal-body .travel-request-header span { color: var(--text); }
-#modal-body .travel-request.contested .travel-request-header span { color: var(--danger); }
+#modal-body .travel-request.urg-high .travel-request-header span { color: var(--danger); }
+#modal-body .travel-request.urg-med .travel-request-header span { color: var(--gold); }
+#modal-body .travel-request.urg-low .travel-request-header span { color: var(--accent); }
+#modal-body .travel-request.urg-contested .travel-request-header span { color: var(--danger); }
 #modal-body .travel-request-mission { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 4px; }
 #modal-body .travel-request-supplies { font-size: 0.82rem; color: var(--text); }
 #modal-choices { display: flex; flex-direction: column; gap: 8px; }

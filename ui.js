@@ -183,7 +183,8 @@ class UI {
 
   showTravelConfirm({ port, days, inventory, requests, isContested, isNeighbor, onConfirm }) {
     const daysLabel = days === 1 ? "1 day" : `${days} days`;
-    this.els.modalTitle.textContent = port.name;
+    const portTypeTag = port.type === "base" ? '<span class="port-type-tag base">Base</span>' : '<span class="port-type-tag site">Site</span>';
+    this.els.modalTitle.innerHTML = `${port.name} ${portTypeTag}`;
     
     // Add close button
     let closeBtn = this.els.modalTitle.querySelector(".modal-close");
@@ -235,7 +236,8 @@ class UI {
           const supplies = Object.entries(req.remaining)
             .map(([type, amt]) => `${SUPPLY_TYPES[type]?.short || type}: ${amt}t`)
             .join(", ");
-          return `<div class="travel-request ${req.status === "contested" ? "contested" : ""}">` +
+          const urgencyClass = req.status === "contested" ? "urg-contested" : (req.urgency === "high" ? "urg-high" : (req.urgency === "medium" ? "urg-med" : "urg-low"));
+          return `<div class="travel-request ${urgencyClass}">` +
             `<div class="travel-request-header"><span>${urgencyLabel}</span></div>` +
             `<div class="travel-request-mission">${req.mission}</div>` +
             `<div class="travel-request-supplies">Needs: ${supplies}</div>` +
