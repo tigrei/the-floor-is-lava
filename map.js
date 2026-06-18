@@ -18,38 +18,21 @@ class GameMap {
     // lat/lon and WPI data. Array order is significant — `connections` indexes into it.
     this.ports = PORTS;
 
-    const connections = [
-      ["Yokosuka", "Sasebo", 3], ["Yokosuba", "Okinawa", 4],
-      ["Sasebo", "Okinawa", 2],
-      ["Okinawa", "Kunsan", 2], ["Okinawa", "Guam", 5],
-      ["Batanes", "Subic Bay", 2],
-      ["Subic Bay", "Palawan", 2],
-      ["Batanes", "Guam", 5],
-      ["Batanes", "Okinawa", 2],
-      ["Sasebo", "Kunsan", 1],
-      ["Camilo Osias", "Batanes", 2], ["Camilo Osias", "Subic Bay", 2],
-      ["Kunsan", "Batanes", 3],
-      ["Camilo Osias", "Guam", 3],
-      ["Yokosuka", "Guam", 5],
-      ["Subic Bay", "Penghu", 1],
-      ["Paracel Islands"]
-    ]
 
     this.connections = [
-      [0, 1, 3], [0, 2, 4],
       [1, 2, 2],
       [2, 3, 2], [2, 7, 5],
       [4, 5, 2],
       [5, 6, 2],
       [4, 7, 5],
       [4, 2, 2],
-      [1, 3, 1], //
-      [8, 4, 2], [8, 5, 2], //
-      [3, 4, 3], //
-      [8, 7, 3], //
+      [1, 3, 1],
+      [8, 4, 2], [8, 5, 2],
+      [3, 4, 3], 
+      [8, 7, 3],
       [0, 7, 5],
-      [5, 11, 1],
-      [12, 6, 2], [12, 5, 2]
+      [5, 9, 1],
+      [10, 6, 2], [10, 5, 2]
     ];
 
     this._resize();

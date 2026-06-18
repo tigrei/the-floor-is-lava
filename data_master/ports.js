@@ -31,14 +31,14 @@ const PORTS = [
   { name: "Camilo Osias", type: "base", nx: 0.45, ny: 0.86,
     lat: 18.5, lon: 122.15,
     wpi: {"wpiNumber": 58395, "country": "Philippines", "harborSize": "Medium", "harborType": "Coastal (Natural)", "shelter": "Excellent", "channelDepthM": 23.2, "anchorageDepthM": 23.2, "cargoPierDepthM": 11, "maxVesselDraftM": 13, "tugs": "Yes", "pilotage": "Yes", "roro": "Unknown", "container": "Unknown", "restrictions": {"tide": "Yes", "swell": "Yes", "ice": "Unknown"}} },
-  { name: "Kyogamisaki", type: "site", nx: 0.87, ny: 0.0,
-    lat: 35.77, lon: 135.22,
-    wpi: null },
-  { name: "Mujuk", type: "site", nx: 0.67, ny: 0.036,
-    lat: 35.92, lon: 129.55,
-    wpi: null },
   {
     name: "Penghu", type: "site", nx: 0.36, ny: 0.61,
+    lat: 23.5, lon: 119.2,
+    wpi: null
+  },
+  {
+    name: "Paracel Islands", type: "site", nx: 0.1, ny: 0.96,
+    lat: 16.6, lon: 112.7,
     wpi: null
   }
 ];
