@@ -32,6 +32,7 @@ class Game {
     this._render();
     this.ui.renderSidebar();
     this.ui.addLog(1, `Docked at ${this.map.ports[this.state.currentPort].name}. Three supply requests are active.`, "port");
+    this.ui.showScenarioBrief();
   }
 
   _initBaseInventories() {
