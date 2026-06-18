@@ -272,11 +272,11 @@ class Game {
           if (req.stageDaysLeft <= 0) {
             if (req.urgency === "low") {
               req.urgency = "medium";
-              req.stageDaysLeft = 8;
+              req.stageDaysLeft = 12;
               this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now MEDIUM urgency.`, "neutral");
             } else if (req.urgency === "medium") {
               req.urgency = "high";
-              req.stageDaysLeft = 6;
+              req.stageDaysLeft = 10;
               this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now HIGH urgency!`, "bad");
             } else if (req.urgency === "high") {
               req.urgency = "critical";
