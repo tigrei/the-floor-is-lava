@@ -19,22 +19,42 @@ const PORTS = [
   { name: "Batanes", type: "site", nx: 0.42, ny: 0.57,
     lat: 20.45, lon: 121.97,
     wpi: null },
-  { name: "Subic Bay", type: "base", nx: 0.35, ny: 0.7,
+  { name: "Subic Bay", type: "site", nx: 0.35, ny: 0.7,
     lat: 14.8, lon: 120.266667,
-    wpi: {"wpiNumber": 58395, "country": "Philippines", "harborSize": "Medium", "harborType": "Coastal (Natural)", "shelter": "Excellent", "channelDepthM": 23.2, "anchorageDepthM": 23.2, "cargoPierDepthM": 11, "maxVesselDraftM": 13, "tugs": "Yes", "pilotage": "Yes", "roro": "Unknown", "container": "Unknown", "restrictions": {"tide": "Yes", "swell": "Yes", "ice": "Unknown"}} },
+  },
   { name: "Palawan", type: "site", nx: 0.28, ny: 1.02,
     lat: 9.733333, lon: 118.733333,
     wpi: {"wpiNumber": 59270, "country": "Philippines", "harborSize": "Small", "harborType": "Coastal (Natural)", "shelter": "Good", "channelDepthM": 23.2, "anchorageDepthM": 17.1, "cargoPierDepthM": 7.9, "maxVesselDraftM": 0, "tugs": "Yes", "pilotage": "Yes", "roro": "Unknown", "container": "Unknown", "restrictions": {"tide": "Yes", "swell": "Yes", "ice": "No"}} },
   { name: "Guam", type: "base", nx: 0.9, ny: 1.02,
     lat: 13.45, lon: 144.616667,
     wpi: {"wpiNumber": 56550, "country": "Guam", "harborSize": "Medium", "harborType": "Coastal (Breakwater)", "shelter": "Good", "channelDepthM": 11, "anchorageDepthM": 23.2, "cargoPierDepthM": 7.9, "maxVesselDraftM": 0, "tugs": "Yes", "pilotage": "Yes", "roro": "Unknown", "container": "Unknown", "restrictions": {"tide": "Yes", "swell": "Yes", "ice": "No"}} },
-  { name: "Camilo Osias", type: "site", nx: 0.45, ny: 0.86,
+  { name: "Camilo Osias", type: "base", nx: 0.45, ny: 0.86,
     lat: 18.5, lon: 122.15,
-    wpi: null },
-  { name: "Kyogamisaki", type: "site", nx: 0.87, ny: 0.0,
-    lat: 35.77, lon: 135.22,
-    wpi: null },
-  { name: "Mujuk", type: "site", nx: 0.67, ny: 0.036,
-    lat: 35.92, lon: 129.55,
-    wpi: null },
+    wpi: {"wpiNumber": 58395, "country": "Philippines", "harborSize": "Medium", "harborType": "Coastal (Natural)", "shelter": "Excellent", "channelDepthM": 23.2, "anchorageDepthM": 23.2, "cargoPierDepthM": 11, "maxVesselDraftM": 13, "tugs": "Yes", "pilotage": "Yes", "roro": "Unknown", "container": "Unknown", "restrictions": {"tide": "Yes", "swell": "Yes", "ice": "Unknown"}} },
+  {
+    name: "Penghu", type: "site", nx: 0.36, ny: 0.61,
+    lat: 23.5, lon: 119.2,
+    wpi: null
+  },
+  {
+    name: "Paracel Islands", type: "site", nx: 0.1, ny: 0.96,
+    lat: 16.6, lon: 112.7,
+    wpi: null
+  },
+  {
+    name: "Pengjia", type: "site", nx: 0.46, ny: 0.49,
+    wpi: null
+  },
+  {
+    name: "Pratas", type: "site", nx: 0.25, ny: 0.75, 
+    wpi: null
+  },
+  {
+    name: "Lanyu", type: "site", nx: 0.43, ny: 0.68,
+    wpi: null
+  },
+  {
+    name: "Iriomote Ishigaki", type: "site", nx: 0.52, ny: 0.56,
+    wpi: null
+  }
 ];

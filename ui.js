@@ -10,6 +10,7 @@ class UI {
       modalTitle:   document.getElementById("modal-title"),
       modalBody:    document.getElementById("modal-body"),
       modalChoices: document.getElementById("modal-choices"),
+      toastContainer: document.getElementById("toast-container"),
     };
   }
 
@@ -20,15 +21,15 @@ class UI {
   }
 
   _renderShipStatus() {
-    const s = this.game.state;
+    const state = this.game.state;
     const total = this.game.getCargoTotal();
-    const loc = s.traveling
-      ? `In transit → ${this.game.map.ports[s.travelTo].name} (${s.travelDaysRemaining}d remaining)`
-      : `Docked at ${this.game.map.ports[s.currentPort].name}`;
+    const loc = state.traveling
+      ? `In transit → ${this.game.map.ports[state.travelTo].name} (${state.travelDaysRemaining}d remaining)`
+      : `Docked at ${this.game.map.ports[state.currentPort].name}`;
 
     let cargoHtml = "";
-    for (const [type, amt] of Object.entries(s.cargo)) {
-      if (amt > 0) cargoHtml += `<div class="cargo-row"><span>${SUPPLY_TYPES[type].short}</span><span>${amt}t</span></div>`;
+    for (const [type, amt] of Object.entries(state.cargo)) {
+      if (amt > 0) cargoHtml += `<div class="cargo-row"><span>${type}</span><span>${amt}t</span></div>`;
     }
     if (!cargoHtml) cargoHtml = '<div class="cargo-empty">Empty</div>';
 
@@ -42,17 +43,17 @@ class UI {
     let seaHtml = "";
     if (this.game.weather.scenario) {
       let nx, ny;
-      if (s.traveling) {
-        const from = this.game.map.ports[s.travelFrom], to = this.game.map.ports[s.travelTo];
-        const totalDays = s.travelElapsed + s.travelDaysRemaining;
-        const t = totalDays > 0 ? s.travelElapsed / totalDays : 0;
+      if (state.traveling) {
+        const from = this.game.map.ports[state.travelFrom], to = this.game.map.ports[state.travelTo];
+        const totalDays = state.travelElapsed + state.travelDaysRemaining;
+        const t = totalDays > 0 ? state.travelElapsed / totalDays : 0;
         nx = from.nx + t * (to.nx - from.nx);
         ny = from.ny + t * (to.ny - from.ny);
       } else {
-        const port = this.game.map.ports[s.currentPort];
+        const port = this.game.map.ports[state.currentPort];
         nx = port.nx; ny = port.ny;
       }
-      const res = this.game.weather.getResistanceAt(nx, ny, s.day);
+      const res = this.game.weather.getResistanceAt(nx, ny, state.day);
       const sea = this.game.weather.seaState(res);
       seaHtml = `<div class="weather-status"><span class="weather-label">Sea state</span><span class="sea-state ${sea.cls}">${sea.label}</span></div>`;
     }
@@ -62,32 +63,32 @@ class UI {
       `<div class="ship-location">${loc}</div>` +
       `<div class="weather-status"><span class="weather-label">Weather: ${weatherLabel}</span>${weatherDetail}</div>` +
       seaHtml +
-      `<div class="cargo-bar"><span>Cargo</span><span>${total} / ${s.maxCargo}t</span></div>` +
-      `<div class="cargo-bar-visual"><div class="cargo-bar-fill" style="width:${(total / s.maxCargo) * 100}%"></div></div>` +
+      `<div class="cargo-bar"><span>Cargo</span><span>${total} / ${state.maxCargo}t</span></div>` +
+      `<div class="cargo-bar-visual"><div class="cargo-bar-fill" style="width:${(total / state.maxCargo) * 100}%"></div></div>` +
       `<div class="cargo-list">${cargoHtml}</div>`;
   }
 
   _renderActions() {
-    const s = this.game.state;
-    if (s.traveling || s.gameOver) {
+    const state = this.game.state;
+    if (state.traveling || state.gameOver) {
       this.els.actionsPanel.innerHTML = "";
       return;
     }
 
-    const port = this.game.map.ports[s.currentPort];
+    const port = this.game.map.ports[state.currentPort];
     let html = `<h2>${port.type === "base" ? "Base Operations" : "Site Operations"}</h2>`;
 
     // Delivery section (site with active requests)
-    const reqs = this.game.getRequestsAtPort(s.currentPort);
+    const reqs = this.game.getRequestsAtPort(state.currentPort);
     if (reqs.length > 0) {
       for (const req of reqs) {
         html += `<div class="action-section"><div class="section-label">DELIVERY: ${req.mission}</div>`;
         html += `<div class="delivery-grid">`;
         for (const [type, needed] of Object.entries(req.remaining)) {
-          const have = s.cargo[type] || 0;
+          const have = state.cargo[type] || 0;
           const ok = have >= needed;
           html += `<div class="delivery-row">` +
-            `<span>${SUPPLY_TYPES[type].short}</span>` +
+            `<span>${type}</span>` +
             `<span>Need ${needed}t</span>` +
             `<span>Have ${have}t</span>` +
             `<span class="${ok ? "status-ok" : "status-need"}">${ok ? "Ready" : "Short"}</span></div>`;
@@ -104,9 +105,9 @@ class UI {
       const types = Object.keys(SUPPLY_TYPES);
       for (const type of types) {
         const stock = port.inventory[type] || 0;
-        const shipHas = s.cargo[type] || 0;
+        const shipHas = state.cargo[type] || 0;
         html += `<div class="load-row">` +
-          `<span class="load-name">${SUPPLY_TYPES[type].short}</span>` +
+          `<span class="load-name">${type}</span>` +
           `<span class="load-stock">${stock}t</span>` +
           `<span class="load-ship">${shipHas}t</span>` +
           `<button class="btn-sm" onclick="game.loadCargo('${type}',5)">+5</button>` +
@@ -126,34 +127,7 @@ class UI {
       html += `</div>`;
     }
 
-    // Navigation
-    const connected = this.game.map.getConnected(s.currentPort);
-    html += `<div class="action-section"><div class="section-label">NAVIGATE</div>`;
-    for (const { port: idx, days } of connected) {
-      const target = this.game.map.ports[idx];
-      const hasReq = this.game.getRequestsAtPort(idx).length > 0;
-      const isContested = this.game.isPortContested(idx);
-      const isStorm = !isContested && this.game.isRouteWeatherBlocked(s.currentPort, idx);
-
-      let badge = "";
-      if (isContested) {
-        badge = '<span class="nav-badge contested">CONTESTED</span>';
-      } else if (isStorm) {
-        badge = '<span class="nav-badge storm">STORM</span>';
-      } else if (target.type === "base") {
-        badge = '<span class="nav-badge base">BASE</span>';
-      } else if (hasReq) {
-        badge = '<span class="nav-badge request">REQ</span>';
-      }
-
-      const disabledAttr = (isContested || isStorm) ? "disabled" : "";
-      const daysText = isContested ? "Blocked" : isStorm ? "Storm" : `${days}d`;
-
-      html += `<button class="btn-nav" ${disabledAttr} onclick="game.startTravel(${idx})">` +
-        `<span>${target.name} ${badge}</span><span class="nav-days">${daysText}</span></button>`;
-    }
-    html += `</div>`;
-
+    
     this.els.actionsPanel.innerHTML = html;
   }
 
@@ -171,7 +145,7 @@ class UI {
       let badgeText = isCont ? "CONTESTED" : req.urgency.toUpperCase();
       let supplyList = isCont 
         ? "Communications lost. Awaiting recovery."
-        : Object.entries(req.remaining).map(([t, n]) => `${SUPPLY_TYPES[t].short} ${n}t`).join(", ");
+        : Object.entries(req.remaining).map(([t, n]) => `${t} ${n}t`).join(", ");
       
       let deadlineText = isCont
         ? `Recovery ETA: ${req.stageDaysLeft} days (-${1 + this.game._getSuppliedNeighborsCount(req.destination)}d/d)`
@@ -233,7 +207,129 @@ class UI {
     });
   }
 
-  hideModal() { this.els.overlay.classList.add("hidden"); }
+  showTravelConfirm({ port, days, inventory, requests, isContested, isNeighbor, isCurrentPort, isStorm, onConfirm }) {
+    const daysLabel = days === 1 ? "1 day" : `${days} days`;
+    const portTypeTag = port.type === "base" ? '<span class="port-type-tag base">Base</span>' : '<span class="port-type-tag site">Site</span>';
+    this.els.modalTitle.innerHTML = `${port.name} ${portTypeTag}`;
+    
+    // Add close button
+    let closeBtn = this.els.modalTitle.querySelector(".modal-close");
+    if (!closeBtn) {
+      closeBtn = document.createElement("button");
+      closeBtn.className = "modal-close";
+      closeBtn.textContent = "×";
+      closeBtn.addEventListener("click", () => this.hideModal());
+      this.els.modalTitle.appendChild(closeBtn);
+    }
+    
+    if (isCurrentPort) {
+      this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle">Currently Docked</div>`);
+    } else if (isContested) {
+      this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle contested">Warning: cannot travel to contested port.</div>`);
+    } else if (isStorm) {
+      this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle storm">Warning: route is blocked by storm.</div>`);
+    } else if (!isNeighbor) {
+      this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle">Direct travel not available from current port.</div>`);
+    }
+    this.els.modalTitle.classList.toggle("modal-title-contested", isContested);
+    
+    // Add travel-modal class to position in top-left
+    this.els.overlay.classList.add("travel-modal");
+
+    let portDetailsHtml;
+    let detailsLines = [];
+    if (port.wpi?.harborType) detailsLines.push(`Harbor Type: ${port.wpi.harborType}`);
+    if (port.wpi?.harborSize) detailsLines.push(`Harbor Size: ${port.wpi.harborSize}`);
+    if (port.wpi?.channelDepthM) detailsLines.push(`Channel Depth: ${port.wpi.channelDepthM} M`);
+    if (port.wpi?.anchorageDepthM) detailsLines.push(`Anchorage Depth: ${port.wpi.anchorageDepthM} M`);
+    
+    portDetailsHtml = detailsLines.length > 0 
+      ? `<div class="travel-section"><strong>Port Details:</strong> ${detailsLines.join("<br/>")}</div>`
+      : "";
+
+    let inventoryHtml;
+    if (isContested) {
+      inventoryHtml = `<div class="travel-section"><strong>Available inventory:</strong> Comms Blackout: Unable to see inventory at this moment.</div>`;
+    } else {
+      inventoryHtml = inventory && Object.keys(inventory).length
+        ? `<div class="travel-section"><strong>Available inventory:</strong> ${Object.entries(inventory)
+            .filter(([, amt]) => amt > 0)
+            .map(([type, amt]) => `${SUPPLY_TYPES[type]?.short || type}: ${amt}t`)
+            .join(", ")}</div>`
+        : "<div class=\"travel-section\"><strong>Available inventory:</strong> None</div>";
+    }
+    const requestHtml = requests && requests.length
+      ? `<div class="travel-section"><strong>Requests at destination:</strong>${requests.map(req => {
+          const urgencyLabel = req.status === "contested"
+            ? "CONTESTED"
+            : req.urgency.toUpperCase();
+          const supplies = Object.entries(req.remaining)
+            .map(([type, amt]) => `${SUPPLY_TYPES[type]?.short || type}: ${amt}t`)
+            .join(", ");
+          const urgencyClass = req.status === "contested" ? "urg-contested" : (req.urgency === "high" ? "urg-high" : (req.urgency === "medium" ? "urg-med" : "urg-low"));
+          return `<div class="travel-request ${urgencyClass}">` +
+            `<div class="travel-request-header"><span>${urgencyLabel}</span></div>` +
+            `<div class="travel-request-mission">${req.mission}</div>` +
+            `<div class="travel-request-supplies">Needs: ${supplies}</div>` +
+            `</div>`;
+        }).join("")}</div>`
+      : "<div class=\"travel-section\"><strong>Requests at destination:</strong> None</div>";
+
+    this.els.modalBody.innerHTML =
+      `${(isNeighbor && !isContested && !isCurrentPort) ? `<div class="travel-summary">Set sail to ${port.name}? Estimated travel time: ${daysLabel}.</div>` : ""}` +
+      `${portDetailsHtml}` +
+      `${inventoryHtml}` +
+      `${requestHtml}`;
+
+    this.els.modalChoices.innerHTML = "";
+
+    if (isNeighbor && !isContested && !isStorm && !isCurrentPort) {
+      const travelBtn = document.createElement("button");
+      travelBtn.textContent = "Travel";
+      travelBtn.addEventListener("click", () => {
+        this.hideModal();
+        onConfirm();
+      });
+      this.els.modalChoices.appendChild(travelBtn);
+    }
+
+    this.els.overlay.classList.remove("hidden");
+  }
+
+  hideModal() {
+    const closeBtn = this.els.modalTitle.querySelector(".modal-close");
+    if (closeBtn) closeBtn.remove();
+    this.els.overlay.classList.remove("travel-modal");
+    this.els.overlay.classList.add("hidden");
+  }
+
+  showToast(message, type = "notif", duration = 3500) {
+    this._clearToastTimeout();
+    const toast = document.createElement("div");
+    const variant = type === "error" ? "toast-error" : (type === "warning" ? "toast-warning" : "toast-notif");
+    toast.className = `toast ${variant}`;
+    toast.textContent = message;
+    this.els.toastContainer.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add("show"));
+
+    this.toastTimeout = setTimeout(() => {
+      toast.classList.remove("show");
+      toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+      this.toastTimeout = null;
+    }, duration);
+  }
+
+  _clearToastTimeout() {
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+      this.toastTimeout = null;
+    }
+    const current = this.els.toastContainer.querySelector(".toast.show");
+    if (current) {
+      current.classList.remove("show");
+      current.addEventListener("transitionend", () => current.remove(), { once: true });
+    }
+  }
 
   addLog(day, message, type = "neutral") {
     const li = document.createElement("li");
