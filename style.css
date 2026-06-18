@@ -111,7 +111,18 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 #modal-overlay.hidden { display: none; }
 #modal { background: var(--bg-panel); border: 1px solid var(--accent); border-radius: var(--radius); padding: 24px 28px; max-width: 460px; width: 90%; text-align: center; }
 #modal h2 { color: var(--accent); margin-bottom: 10px; font-size: 1.1rem; }
-#modal-body { color: var(--text); margin-bottom: 16px; line-height: 1.5; font-size: 0.9rem; }
+#modal-body { color: var(--text); margin-bottom: 16px; line-height: 1.5; font-size: 0.9rem; text-align: left; }
+#modal-body .travel-summary { margin-bottom: 10px; font-weight: 600; }
+#modal-body .travel-warning { margin-bottom: 10px; color: var(--danger); font-weight: 700; }
+#modal-body .travel-section { margin-bottom: 10px; font-size: 0.85rem; }
+#modal-body .travel-section strong { display: block; margin-bottom: 4px; color: var(--text); }
+#modal-body .travel-request { padding: 8px 10px; margin: 6px 0; border-radius: var(--radius); background: rgba(255,255,255,0.04); border: 1px solid rgba(79,195,247,0.12); }
+#modal-body .travel-request.contested { background: rgba(239,83,80,0.08); border-color: rgba(239,83,80,0.2); }
+#modal-body .travel-request-header { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 0.78rem; font-weight: 700; }
+#modal-body .travel-request-header span { color: var(--text); }
+#modal-body .travel-request.contested .travel-request-header span { color: var(--danger); }
+#modal-body .travel-request-mission { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 4px; }
+#modal-body .travel-request-supplies { font-size: 0.82rem; color: var(--text); }
 #modal-choices { display: flex; flex-direction: column; gap: 8px; }
 #modal-choices > button { padding: 8px 16px; border: 1px solid var(--accent); border-radius: var(--radius); background: transparent; color: var(--accent); cursor: pointer; font-size: 0.85rem; transition: background 0.2s; }
 #modal-choices > button:hover { background: var(--accent); color: var(--bg-dark); }
@@ -120,6 +131,52 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 .choice-option button:hover { background: var(--accent); color: var(--bg-dark); }
 .choice-outcomes { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
 .choice-outcomes span { font-size: 0.68rem; color: var(--text-muted); background: rgba(79,195,247,0.08); padding: 2px 6px; border-radius: 3px; }
+
+#toast-container {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  z-index: 120;
+  max-width: calc(100vw - 32px);
+}
+
+.toast {
+  min-width: 220px;
+  max-width: 360px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(79,195,247,0.25);
+  background: rgba(13,33,55,0.96);
+  color: var(--text);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.3);
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: auto;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-error {
+  border-color: rgba(239,83,80,0.35);
+  background: rgba(44,18,28,0.96);
+}
+
+.toast-warning {
+  border-color: rgba(255,193,7,0.35);
+  background: rgba(55,42,10,0.96);
+}
+
+.toast-notif {
+  border-color: rgba(79,195,247,0.35);
+}
 
 /* Game Over */
 .game-over-stats p { margin-bottom: 6px; font-size: 0.9rem; color: var(--text-muted); }

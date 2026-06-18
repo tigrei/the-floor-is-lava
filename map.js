@@ -59,6 +59,8 @@ class GameMap {
 
     this._resize();
     window.addEventListener("resize", () => this._resize());
+    this.canvas.addEventListener("mousemove", (e) => this._handleCanvasMouseMove(e));
+    this.canvas.addEventListener("click", (e) => this._handleCanvasClick(e));
   }
 
   _resize() {
@@ -256,4 +258,85 @@ class GameMap {
     ctx.fill();
     ctx.restore();
   }
+
+  _handleCanvasClick(event) {
+    const rect = this.canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+
+    const portStatuses = this.ports.map((port, idx) => ({
+      name: port.name,
+      contested: typeof game !== 'undefined' ? game.isPortContested(idx) : false,
+    }));
+
+    for (let i = 0; i < this.ports.length; i++) {
+      const port = this.ports[i];
+      const p = this._toPixel(port.nx, port.ny);
+      const radius = port.type === "base" ? 15 : 12;
+
+      if (Math.hypot(clickX - p.x, clickY - p.y) <= radius) {
+        this._onPortClick(port, i);
+        break;
+      }
+    }
+  }
+
+  _handleCanvasMouseMove(event) {
+    const rect = this.canvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    let hoveringPort = false;
+
+    for (let i = 0; i < this.ports.length; i++) {
+      const p = this._toPixel(this.ports[i].nx, this.ports[i].ny);
+      const radius = this.ports[i].type === "base" ? 15 : 12;
+      
+      if (Math.hypot(mouseX - p.x, mouseY - p.y) <= radius) {
+        hoveringPort = true;
+        break;
+      }
+    }
+    this.canvas.style.cursor = hoveringPort ? "pointer" : "default";
+  }
+
+ _onPortClick(port, index) {
+    console.log(`Clicked map port: ${port.name} (Index: ${index})`);
+    if (this.lastShipState.currentPort === index) {
+      game.ui.showToast("Already at this port.", "warning"); 
+      return;
+    }
+
+    if (this.lastShipState.traveling) {
+      game.ui.showToast("Ship is in transit. Cannot navigate right now.", "warning");
+      return;
+    }
+
+    if (typeof game !== 'undefined') {
+      const isContested = game.isPortContested(index);
+      if (isContested) {
+        game.ui.showToast(`Cannot travel to ${port.name} — port is contested.`, "error");
+        return;
+      }
+
+      const neighbors = this.getConnected(this.lastShipState.currentPort);
+      const isNeighbor = neighbors.some(n => n.port === index);
+      const travelDays = this.getTravelTime(this.lastShipState.currentPort, index);
+      const targetInventory = port.type === "base" ? port.inventory : null;
+      const requestsAtPort = game.requests.filter(r =>
+        (r.status === "active" || r.status === "contested") && r.destination === index
+      );
+      game.ui.showTravelConfirm({
+        portName: port.name,
+        days: travelDays,
+        inventory: targetInventory,
+        requests: requestsAtPort,
+        isContested,
+        isNeighbor,
+        onConfirm: () => game.startTravel(index),
+      });
+    } else {
+      console.error("Game instance 'game' not found globally.");
+    }
+  }
+
 }
