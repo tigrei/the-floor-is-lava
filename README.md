@@ -48,7 +48,7 @@ A matrix ocean simulation drives real-time sea conditions across the map.
 
 **The World:** A 50x50 dynamic ocean grid covers the operational area.
 
-**Scenarios:** 11 weather states ranging from calm seas to extreme typhoons, each with different levels of turbulence. On game start, one scenario is selected at random.
+**Scenarios:** 10 weather states ranging from calm seas to extreme typhoons, each with different levels of turbulence. On game start, one scenario is selected at random.
 
 **Simulation:** Each scenario evolves across 18 time steps (~3 minutes of continuous simulation), stretched over the 60-day game. Four physics systems drive the resistance field:
 * **Wind force** — surface pressure and gusting
