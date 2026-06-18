@@ -124,7 +124,8 @@ class Game {
 
         const selectedMaterials = randomize(materials)
         const logOutput = selectedMaterials.map(material => {
-          return `\t-${material}`
+          const label = SUPPLY_TYPES[material]?.short || material;
+          return `\t- ${label}`
         }).join('\n')
 
         selectedMaterials.forEach((material) => {
