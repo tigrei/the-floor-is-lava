@@ -77,7 +77,6 @@ class UI {
       const types = Object.keys(SUPPLY_TYPES);
       for (const type of types) {
         const stock = port.inventory[type] || 0;
-        if (stock <= 0) continue;
         const shipHas = s.cargo[type] || 0;
         html += `<div class="load-row">` +
           `<span class="load-name">${SUPPLY_TYPES[type].short}</span>` +
