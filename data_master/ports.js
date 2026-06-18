@@ -40,5 +40,21 @@ const PORTS = [
     name: "Paracel Islands", type: "site", nx: 0.1, ny: 0.96,
     lat: 16.6, lon: 112.7,
     wpi: null
+  },
+  {
+    name: "Pengjia", type: "site", nx: 0.46, ny: 0.49,
+    wpi: null
+  },
+  {
+    name: "Pratas", type: "site", nx: 0.25, ny: 0.75, 
+    wpi: null
+  },
+  {
+    name: "Lanyu", type: "site", nx: 0.43, ny: 0.68,
+    wpi: null
+  },
+  {
+    name: "Iriomote Ishigaki", type: "site", nx: 0.52, ny: 0.56,
+    wpi: null
   }
 ];
