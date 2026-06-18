@@ -97,6 +97,14 @@ class UI {
     const port = this.game.map.ports[state.currentPort];
     let html = `<h2>${port.type === "base" ? "Base Operations" : "Site Operations"}</h2>`;
 
+    // Hold Position — at the top, shown when every lane out is storm-blocked.
+    if (this.game.isStranded()) {
+      html += `<div class="action-section">` +
+        `<p class="wait-note stranded">All lanes are impassable. Hold position to wait out the storm.</p>` +
+        `<button class="btn-action btn-hold" onclick="game.holdPosition()">⚓ Hold Position (wait out weather)</button>` +
+        `</div>`;
+    }
+
     // Delivery section (site with active requests)
     const reqs = this.game.getRequestsAtPort(state.currentPort);
     if (reqs.length > 0) {
@@ -145,42 +153,6 @@ class UI {
       }
       html += `</div>`;
     }
-
-    // Navigation
-    const connected = this.game.map.getConnected(state.currentPort);
-    let anyStorm = false;
-    html += `<div class="action-section"><div class="section-label">NAVIGATE</div>`;
-    for (const { port: idx, days } of connected) {
-      const target = this.game.map.ports[idx];
-      const hasReq = this.game.getRequestsAtPort(idx).length > 0;
-      const isContested = this.game.isPortContested(idx);
-      const isStorm = !isContested && this.game.isRouteWeatherBlocked(state.currentPort, idx);
-      if (isStorm) anyStorm = true;
-
-      let badge = "";
-      if (isContested) {
-        badge = '<span class="nav-badge contested">CONTESTED</span>';
-      } else if (isStorm) {
-        badge = '<span class="nav-badge storm">STORM</span>';
-      } else if (target.type === "base") {
-        badge = '<span class="nav-badge base">BASE</span>';
-      } else if (hasReq) {
-        badge = '<span class="nav-badge request">REQ</span>';
-      }
-
-      const disabledAttr = (isContested || isStorm) ? "disabled" : "";
-      const daysText = isContested ? "Blocked" : isStorm ? "Storm" : `${days}d`;
-
-      html += `<button class="btn-nav" ${disabledAttr} onclick="game.startTravel(${idx})">` +
-        `<span>${target.name} ${badge}</span><span class="nav-days">${daysText}</span></button>`;
-    }
-
-    // Hold Position — wait out the storm; after a few days it breaks and seas subside.
-    if (anyStorm && this.game.isStranded()) {
-      html += `<p class="wait-note stranded">All lanes are impassable. Hold position to wait out the storm.</p>`;
-      html += `<button class="btn-action btn-hold" onclick="game.holdPosition()">⚓ Hold Position (wait out weather)</button>`;
-    }
-    html += `</div>`;
 
     this.els.actionsPanel.innerHTML = html;
   }
