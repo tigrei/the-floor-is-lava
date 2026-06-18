@@ -1,55 +1,70 @@
-# First Island Chain: Gray Zone Operations
+# L.A.V.A. — Littoral Asset & Vessel Allocation
 
-A browser-based JavaScript wargaming scenario game, set in the high-tension "Gray Zone" of the Philippine Sea, South China Sea, and Taiwan Strait.
+A browser-based maritime logistics strategy game. You command a naval logistics ship moving combat-engineering supplies to forward-deployed Seabees and expeditionary units across the island chain surrounding Taiwan. The gameplay is route planning, cargo management, and fulfilling delivery requests before neglected ports degrade and become contested.
 
-## 1. The World State: The First Island Chain
+Built with vanilla HTML/CSS/JavaScript — no frameworks, no build step. Open `index.html` in a browser to play.
 
-**The Setting:** The Area of Responsibility (AOR) spans the Philippine Sea, the South China Sea, and the Taiwan Strait. This is a "Gray Zone" conflict—war hasn't formally been declared, but acts of sabotage, maritime blockades, and asymmetric warfare are active.
+## Core Gameplay Loop
 
-**The Atmosphere:** High-tension, humid, and constantly monitored. Radio silence (EMCON - Emissions Control) is frequently necessary to avoid detection by enemy over-the-horizon radar.
+1. **Dock at a base** and load combat-engineering supplies (free — capacity is the only constraint).
+2. **Chart a route** across a graph of connected ports, balancing travel time against deadlines.
+3. **Deliver supplies** to remote sites with active requests.
+4. **Manage escalation** — requests left unfulfilled climb in urgency and can tip ports into a contested state that blocks travel.
 
-**Island States:**
-* **Secure:** Allied-controlled, functioning as logistical hubs.
-* **Contested (The Brink):** Experiencing heavy cyber attacks, supply starvation, or covert insertion of enemy special forces.
-* **Fallen:** Overrun. Approaching these islands requires stealth or escorts, and the mission shifts from "fortify" to "clandestine extraction" or "sabotage."
+There is **no currency, no health system, and no combat.** The constraints are cargo capacity (100t), the 60-day clock, and the request-escalation pressure.
 
-## 2. Mission Profiles: Combat Engineer Packages
+## The Map
 
-Your "cargo" consists of modular engineering capabilities needed to secure contested islands:
+A graph of **11 ports** across the First Island Chain (Japan → Taiwan → Philippines → Guam):
 
-* **Expeditionary Airfield Repair (Rapid Airfield Damage Repair - RADR):**
-  * *The Narrative:* "Palawan's primary airstrip took a hit from an unclaimed loitering munition. Allied P-8 Poseidons cannot launch to hunt enemy submarines until the craters are filled and the runway is certified. Deliver the RADR package and heavy equipment within 48 hours, or the sub-hunting net collapses."
-* **Water Security (ROWPU - Reverse Osmosis Water Purification Unit):**
-  * *The Narrative:* "An island garrison in the Batanes has had its local aquifers intentionally contaminated. Morale is collapsing, and combat effectiveness is dropping by 15% a day. We need to deploy a heavy ROWPU and generator package before they are forced to surrender due to dehydration."
-* **Coastal Fortification & Sensor Grids:**
-  * *The Narrative:* "Intelligence indicates an amphibious flotilla is massing 200 nautical miles away. We need to reinforce a beachhead on a critical choke-point island with Hesco barriers, anti-ship missile emplacements, and an over-the-horizon radar array to deny them the landing zone."
+* **5 Bases** (Yokosuka, Sasebo, Kunsan, Subic Bay, Guam) — logistics hubs that supply cargo for free and restock over time. Each carries a different mix.
+* **6 Sites** (Okinawa, Batanes, Palawan, Camilo Osias, Kyogamisaki, Mujuk) — forward delivery destinations that generate requests.
 
-## 3. The Hazards: Events & Interdictions
+Ports are connected by edges with travel times of 1–5 days. You freely choose your next destination from connected ports — routing efficiency is the heart of the game.
 
-The "random events" reflect the geopolitical reality of the South China Sea.
+## Supplies & Requests
 
-* **The Maritime Militia (Asymmetric Piracy):**
-  * *Event:* A swarm of "fishing vessels" aggressively blocks your path. They aren't flying military colors, but their hulls are reinforced steel.
-  * *Dilemma:* Ramming them creates an international incident and delays your voyage; altering course burns precious fuel and time; firing warning shots escalates the conflict meter.
-* **Severe Weather (Typhoon Alley):**
-  * *Event:* A Category 4 Typhoon is forming in the Philippine Sea.
-  * *Dilemma:* Do you sail straight through it to meet your deadline (risking severe damage to the ship and loss of deck cargo), or do you divert to a safe harbor, guaranteeing the island falls to the enemy while you wait out the storm?
-* **Electronic Warfare & Spoofing:**
-  * *Event:* Your GPS and Automatic Identification System (AIS) are spoofed. The map UI glitches out, and your ship's reported position jumps 50 miles off course.
-  * *Dilemma:* You must rely on dead reckoning (using a manual, slower navigation method) for the next 24 hours, costing you time but ensuring you don't sail into an enemy minefield.
+Cargo is drawn from a catalog of real combat-engineering items (bulldozers, bridge sections, ROWPU water units, SATCOM terminals, tactical comms shelters, drilling rigs, medical kits, fuel, ammunition, and more), each keyed by a cargo ID with physical dimensions.
 
-## 4. The "Ticking Clock" & Scoring Dynamics
+Each **request** specifies a destination site, a supply mix, an urgency, and a narrative mission (airfield repair, water purification, bridge construction, medical facility, ammunition bunker, etc.). You start with 3 active requests; more arrive over time (up to 5 concurrent).
 
-* **Scoring via "Force Projection":** Instead of just gold or points, the player earns "Force Projection" or "Deterrence Points." Successfully setting up a missile battery on an island increases the allied threat radius, making future voyages in that sector safer.
-* **The Domino Effect:** If an island falls because the Seabees didn't arrive in time, the enemy's radar and interdiction range expands, permanently altering the map and making the route to Taiwan vastly more dangerous.
+## The Escalation Mechanic
 
-## 5. Game Architecture & Data Models
+Instead of fixed deadlines, requests degrade through stages if neglected:
 
-The game utilizes a structured, data-driven architecture to manage the complexity of military logistics and dynamic events:
+```
+low → medium → high → critical → CONTESTED
+```
 
-* **Cargo Systems (`data_master/cargo.json` & `cargo_schema.txt`):** A comprehensive catalog of modular engineering capabilities, categorized into Heavy Equipment, Modular Structures, Construction Materials, and Heavy Lift items (e.g., Bulldozers, ROWPUs, Cranes). Each item includes specific weight and dimension constraints.
-* **Vessel Data:** Dedicated ship models dictate the capacity, speed, and defense capabilities of the transport vessels.
-* **Data-Driven Events (`events-data.js`):** Geopolitical hazards and interdictions are processed through a modular event engine, allowing for branching choices, skill checks, and direct impact on ship condition, crew morale, and Force Projection scores.
+* Each stage has a countdown (`stageDaysLeft`). When it runs out, urgency escalates.
+* A **critical** request rolls a 20% chance each day to become **contested**.
+* A **contested** port **blocks all travel** to it — deliveries are locked out until it recovers.
+* Recovery speed depends on the surrounding network: a contested port heals faster (`1 + supplied neighbors` per day) when its neighbors are bases or unburdened sites. Keep the network healthy to reclaim contested ports.
 
----
+## Random Events
 
+Occasional logistical complications occur during travel (~20% per day): rough seas, engine trouble, navigation hazards, comms blackouts, cargo lashing failures, shipping traffic, plus favorable currents and clear-weather windows. These are operational complications — they affect travel time or cargo condition, not the core supply-delivery gameplay.
+
+## Scoring
+
+The game runs **60 days**. Your end-of-game report tracks:
+
+* Requests fulfilled vs. total
+* On-time / late / failed deliveries
+* Total tonnage delivered
+* Overall fulfillment rate
+
+## Architecture
+
+| File | Responsibility |
+|------|----------------|
+| `index.html` | App shell: header, canvas map, sidebar panels, modal |
+| `style.css` | Dark naval theme, sidebar panels, request cards |
+| `map.js` | `GameMap` — port graph, connections, canvas rendering |
+| `game.js` | `Game` — state, travel, cargo, requests, escalation, scoring |
+| `ui.js` | `UI` — sidebar panels, port actions, event modals |
+| `events.js` / `events-data.js` | Data-driven travel event engine and catalog |
+| `data_master/supply-data.js` | `SUPPLY_TYPES` cargo catalog + `REQUEST_TEMPLATES` |
+| `data_master/` | Reference data: ship catalog, cargo schema, weather grids |
+
+See [CONTEXT.md](CONTEXT.md) for a full technical breakdown of state, mechanics, and data models.
