@@ -102,6 +102,16 @@ class UI {
     // Loading section (base)
     if (port.type === "base") {
       html += `<div class="action-section"><div class="section-label">LOAD SUPPLIES</div>`;
+      
+      // --- ADDED COLUMN LABELS ---
+      html += `<div class="load-row load-header" style="font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 5px; padding-bottom: 5px;">` +
+        `<span class="load-name">Item</span>` +
+        `<span class="load-stock">Base Stock</span>` +
+        `<span class="load-ship">Ship Cargo</span>` +
+        `<span class="load-actions" style="flex: 1; text-align: right; padding-right: 10px;">Actions</span>` +
+        `</div>`;
+      // ---------------------------
+
       const types = Object.keys(SUPPLY_TYPES);
       for (const type of types) {
         const stock = port.inventory[type] || 0;
