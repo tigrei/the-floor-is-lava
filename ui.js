@@ -28,7 +28,7 @@ class UI {
 
     let cargoHtml = "";
     for (const [type, amt] of Object.entries(s.cargo)) {
-      if (amt > 0) cargoHtml += `<div class="cargo-row"><span>${SUPPLY_TYPES[type].short}</span><span>${amt}t</span></div>`;
+      if (amt > 0) cargoHtml += `<div class="cargo-row"><span>${type}</span><span>${amt}t</span></div>`;
     }
     if (!cargoHtml) cargoHtml = '<div class="cargo-empty">Empty</div>';
 
@@ -60,7 +60,7 @@ class UI {
           const have = s.cargo[type] || 0;
           const ok = have >= needed;
           html += `<div class="delivery-row">` +
-            `<span>${SUPPLY_TYPES[type].short}</span>` +
+            `<span>${type}</span>` +
             `<span>Need ${needed}t</span>` +
             `<span>Have ${have}t</span>` +
             `<span class="${ok ? "status-ok" : "status-need"}">${ok ? "Ready" : "Short"}</span></div>`;
@@ -80,7 +80,7 @@ class UI {
         if (stock <= 0) continue;
         const shipHas = s.cargo[type] || 0;
         html += `<div class="load-row">` +
-          `<span class="load-name">${SUPPLY_TYPES[type].short}</span>` +
+          `<span class="load-name">${type}</span>` +
           `<span class="load-stock">${stock}t</span>` +
           `<span class="load-ship">${shipHas}t</span>` +
           `<button class="btn-sm" onclick="game.loadCargo('${type}',5)">+5</button>` +
@@ -142,7 +142,7 @@ class UI {
       let badgeText = isCont ? "CONTESTED" : req.urgency.toUpperCase();
       let supplyList = isCont 
         ? "Communications lost. Awaiting recovery."
-        : Object.entries(req.remaining).map(([t, n]) => `${SUPPLY_TYPES[t].short} ${n}t`).join(", ");
+        : Object.entries(req.remaining).map(([t, n]) => `${t} ${n}t`).join(", ");
       
       let deadlineText = isCont
         ? `Recovery ETA: ${req.stageDaysLeft} days (-${1 + this.game._getSuppliedNeighborsCount(req.destination)}d/d)`

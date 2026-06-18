@@ -123,10 +123,7 @@ class Game {
         }
 
         const selectedMaterials = randomize(materials)
-        const logOutput = selectedMaterials.map(material => {
-          const label = SUPPLY_TYPES[material]?.short || material;
-          return `\t- ${label}`
-        }).join('\n')
+        const logOutput = selectedMaterials.map(material => `\t- ${SUPPLY_TYPES[material].name}`).join('\n')
 
         selectedMaterials.forEach((material) => {
           let currentValue = base.inventory[material]
