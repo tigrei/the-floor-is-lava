@@ -16,7 +16,7 @@ class UI {
     this.els.shipStatus.addEventListener("click", (event) => {
       const button = event.target.closest("#hold-position-btn");
       if (!button || button.disabled) return;
-      this.game.holdPosition(2);
+      this.game.holdPosition();
     });
   }
 
@@ -67,7 +67,7 @@ class UI {
 
     const holdLabel = holdState.active
       ? `Holding... ${holdState.daysLeft}d left`
-      : "Hold Position (2d)";
+      : "Hold Position";
     const holdDisabled = state.traveling || state.gameOver || holdState.active ? "disabled" : "";
 
     this.els.shipStatus.innerHTML =
@@ -86,22 +86,21 @@ class UI {
       this.els.actionsPanel.innerHTML = "";
       return;
     }
-    if (state.waiting) {
+    if (this.game.holdPositionState.active) {
       this.els.actionsPanel.innerHTML =
         `<h2>Holding Position</h2>` +
         `<div class="action-section"><div class="section-label">Waiting Out Weather</div>` +
-        `<p class="wait-note">Riding out the storm at ${this.game.map.ports[state.currentPort].name}. Holding until a lane reopens…</p></div>`;
+        `<p class="wait-note">Riding out the storm at ${this.game.map.ports[state.currentPort].name}. Holding until the seas break…</p></div>`;
       return;
     }
 
     const port = this.game.map.ports[state.currentPort];
     let html = `<h2>${port.type === "base" ? "Base Operations" : "Site Operations"}</h2>`;
 
-    // Hold Position — at the top, shown when every lane out is storm-blocked.
+    // Stranded note — points to the Hold Position button in the Ship Status header above.
     if (this.game.isStranded()) {
       html += `<div class="action-section">` +
-        `<p class="wait-note stranded">All lanes are impassable. Hold position to wait out the storm.</p>` +
-        `<button class="btn-action btn-hold" onclick="game.holdPosition()">⚓ Hold Position (wait out weather)</button>` +
+        `<p class="wait-note stranded">All lanes are impassable. Use <b>Hold Position</b> (top) to wait out the storm.</p>` +
         `</div>`;
     }
 

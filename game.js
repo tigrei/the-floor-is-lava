@@ -14,8 +14,6 @@ class Game {
       travelTo: null,
       travelElapsed: 0,
       travelDaysRemaining: 0,
-      waiting: false,
-      waitElapsed: 0,
       cargo: {},
       maxCargo: 100,
       gameOver: false,
@@ -107,21 +105,39 @@ class Game {
     await this._advanceDay({ scheduleNext: true });
   }
 
-  async holdPosition(days = 2) {
-    if (this.state.traveling || this.state.gameOver) return;
+  // Hold position and let days pass (paying the deadline penalty), with a live countdown.
+  // Stops early if a storm-blocked lane reopens on its own; after MAX_WAIT_DAYS of being
+  // stranded, the crew has weathered it and the storm breaks (seas subside, lanes reopen).
+  async holdPosition() {
+    const state = this.state;
+    if (state.traveling || state.gameOver || state.currentPort == null) return;
+    if (this.holdPositionState.active) return;
+
+    const wasStranded = this.isStranded();
     this.holdPositionState.active = true;
-    this.holdPositionState.daysLeft = days;
-    this._render();
-    this.ui.renderSidebar();
+    this.ui.addLog(state.day, `Holding position at ${this.map.ports[state.currentPort].name} to wait out the weather.`, "port");
 
     try {
-      for (let i = 0; i < days; i++) {
-        if (this.state.gameOver || this.state.traveling) break;
-        this.holdPositionState.daysLeft = days - i;
+      for (let elapsed = 0; elapsed < Game.MAX_WAIT_DAYS; elapsed++) {
+        if (state.gameOver || state.traveling) return;
+        this.holdPositionState.daysLeft = Game.MAX_WAIT_DAYS - elapsed;
         this._render();
         this.ui.renderSidebar();
         await this._sleep(1100);
         await this._advanceDay({ scheduleNext: false, allowEvents: false });
+        if (state.gameOver) return;
+
+        // If we were waiting out a storm and a lane has reopened, stop early.
+        if (wasStranded && this._hasOpenRoute()) {
+          this.ui.addLog(state.day, `Seas have eased — lanes are open from ${this.map.ports[state.currentPort].name}.`, "good");
+          return;
+        }
+      }
+
+      // Held the full window and still stranded — force the storm to break.
+      if (this.isStranded()) {
+        this.weather.calm(state.day);
+        this.ui.addLog(state.day, `The storm has broken after ${Game.MAX_WAIT_DAYS} days of holding — seas are subsiding and lanes are reopening.`, "good");
       }
     } finally {
       this.holdPositionState.active = false;
@@ -221,62 +237,6 @@ class Game {
     if (this.state.currentPort == null) return false;
     const conns = this.map.getConnected(this.state.currentPort);
     return conns.length > 0 && !this._hasOpenRoute();
-  }
-
-  // Hold position and let days pass (paying the deadline penalty). Stops early if a
-  // lane reopens; after MAX_WAIT_DAYS the crew braves the storm and may push through.
-  holdPosition() {
-    const state = this.state;
-    if (state.traveling || state.waiting || state.gameOver || state.currentPort == null) return;
-    state.waiting = true;
-    state.waitElapsed = 0;
-    this.ui.addLog(state.day, `Holding position at ${this.map.ports[state.currentPort].name} to wait out the weather.`, "port");
-    this._render();
-    this.ui.renderSidebar();
-    this._scheduleWaitTick();
-  }
-
-  _scheduleWaitTick() {
-    if (!this.state.waiting || this.state.gameOver) return;
-    this._tickTimer = setTimeout(() => this._doWaitTick(), 700);
-  }
-
-  _doWaitTick() {
-    const state = this.state;
-    state.day++;
-    state.waitElapsed++;
-
-    this._checkDeadlines();
-    this._maybeGenerateRequest();
-    if (shouldPortResupply()) this._maybeResupply(state.day);
-    this._render();
-    this.ui.renderSidebar();
-
-    if (state.day >= 60) {
-      state.waiting = false;
-      this._endGame();
-      return;
-    }
-
-    if (this._hasOpenRoute()) {
-      state.waiting = false;
-      this.ui.addLog(state.day, `Seas have eased — lanes are open from ${this.map.ports[state.currentPort].name}.`, "good");
-      this._render();
-      this.ui.renderSidebar();
-      return;
-    }
-
-    // Crew has weathered it — force the storm to break so seas subside and lanes reopen.
-    if (state.waitElapsed >= Game.MAX_WAIT_DAYS) {
-      state.waiting = false;
-      this.weather.calm(state.day);
-      this.ui.addLog(state.day, `The storm has broken after ${state.waitElapsed} days of holding — seas are subsiding and lanes are reopening.`, "good");
-      this._render();
-      this.ui.renderSidebar();
-      return;
-    }
-
-    this._scheduleWaitTick();
   }
 
   // --- Cargo ---
