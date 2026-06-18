@@ -260,7 +260,7 @@ class Game {
     const site = avail[Math.floor(Math.random() * avail.length)];
     const tmpl = REQUEST_TEMPLATES[Math.floor(Math.random() * REQUEST_TEMPLATES.length)];
     const urgency = tmpl.urgencyPool[Math.floor(Math.random() * tmpl.urgencyPool.length)];
-    const stageDaysLeft = { low: 10, medium: 8, high: 6 }[urgency];
+    const stageDaysLeft = { low: 12, medium: 10, high: 8 }[urgency];
 
     this.requests.push({
       id: this._nextId++,
@@ -296,7 +296,7 @@ class Game {
       if (req.status === "active") {
         if (req.urgency === "critical") {
           // Roll chance each day to become contested
-          if (Math.random() < 0.20) {
+          if (Math.random() < 0.25) {
             req.status = "contested";
             req.urgency = "contested";
             req.stageDaysLeft = 12; // Base 12 days to recover
@@ -308,11 +308,11 @@ class Game {
           if (req.stageDaysLeft <= 0) {
             if (req.urgency === "low") {
               req.urgency = "medium";
-              req.stageDaysLeft = 8;
+              req.stageDaysLeft = 10;
               this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now MEDIUM urgency.`, "neutral");
             } else if (req.urgency === "medium") {
               req.urgency = "high";
-              req.stageDaysLeft = 6;
+              req.stageDaysLeft = 8;
               this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now HIGH urgency!`, "bad");
             } else if (req.urgency === "high") {
               req.urgency = "critical";
@@ -328,7 +328,7 @@ class Game {
         if (req.stageDaysLeft <= 0) {
           req.status = "active";
           req.urgency = "high";
-          req.stageDaysLeft = 8; // 8 days at high to fulfill after recovery
+          req.stageDaysLeft = 10; // 10 days at high to fulfill after recovery
           this.ui.addLog(this.state.day, `Secured: ${req.destinationName} is no longer contested. Sea lanes reopened.`, "good");
         }
       }
