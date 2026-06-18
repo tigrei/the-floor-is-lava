@@ -239,6 +239,51 @@ class Game {
     return conns.length > 0 && !this._hasOpenRoute();
   }
 
+  _maybeResupply(day) {
+    const randomize = (arr) => {
+      const randNum = Math.floor(Math.random() * arr.length) + 1;
+      const shuffled = [...arr].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, randNum);
+    };
+
+    const basePorts = this.map.ports.filter((port) => port.type === "base");
+    const selectedBases = randomize(basePorts);
+
+    selectedBases.forEach((base) => {
+      const materials = Object.keys(base.inventory);
+      if (materials.length === 0) return;
+
+      const selectedMaterials = randomize(materials);
+      const logOutput = selectedMaterials.map(material => `\t- ${material}`).join('\n');
+
+      selectedMaterials.forEach((material) => {
+        const currentValue = base.inventory[material];
+        const min = currentValue + 1;
+        const max = currentValue + 50;
+        base.inventory[material] = Math.floor(Math.random() * (max - min + 1)) + min;
+      });
+
+      this.ui.addLog(day, `${base.name} Resupplied!\n${logOutput}`, "good");
+    });
+  }
+
+  // --- Weather hold ---
+
+  // A connected route the ship could actually take right now (not contested, not storm-blocked).
+  _hasOpenRoute() {
+    if (this.state.currentPort == null) return true;
+    const conns = this.map.getConnected(this.state.currentPort);
+    return conns.some(({ port }) =>
+      !this.isPortContested(port) && !this.isRouteWeatherBlocked(this.state.currentPort, port));
+  }
+
+  // True when every way out is blocked by weather/contested — the ship is stranded.
+  isStranded() {
+    if (this.state.currentPort == null) return false;
+    const conns = this.map.getConnected(this.state.currentPort);
+    return conns.length > 0 && !this._hasOpenRoute();
+  }
+
   // --- Cargo ---
 
   loadCargo(type, amount) {
