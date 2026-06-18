@@ -88,7 +88,7 @@ class UI {
           const have = state.cargo[type] || 0;
           const ok = have >= needed;
           html += `<div class="delivery-row">` +
-            `<span>${SUPPLY_TYPES[type].short}</span>` +
+            `<span>${type}</span>` +
             `<span>Need ${needed}t</span>` +
             `<span>Have ${have}t</span>` +
             `<span class="${ok ? "status-ok" : "status-need"}">${ok ? "Ready" : "Short"}</span></div>`;
@@ -107,7 +107,7 @@ class UI {
         const stock = port.inventory[type] || 0;
         const shipHas = state.cargo[type] || 0;
         html += `<div class="load-row">` +
-          `<span class="load-name">${SUPPLY_TYPES[type].short}</span>` +
+          `<span class="load-name">${type}</span>` +
           `<span class="load-stock">${stock}t</span>` +
           `<span class="load-ship">${shipHas}t</span>` +
           `<button class="btn-sm" onclick="game.loadCargo('${type}',5)">+5</button>` +
@@ -145,7 +145,7 @@ class UI {
       let badgeText = isCont ? "CONTESTED" : req.urgency.toUpperCase();
       let supplyList = isCont 
         ? "Communications lost. Awaiting recovery."
-        : Object.entries(req.remaining).map(([t, n]) => `${SUPPLY_TYPES[t].short} ${n}t`).join(", ");
+        : Object.entries(req.remaining).map(([t, n]) => `${t} ${n}t`).join(", ");
       
       let deadlineText = isCont
         ? `Recovery ETA: ${req.stageDaysLeft} days (-${1 + this.game._getSuppliedNeighborsCount(req.destination)}d/d)`
