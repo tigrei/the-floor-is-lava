@@ -32,9 +32,36 @@ class UI {
     }
     if (!cargoHtml) cargoHtml = '<div class="cargo-empty">Empty</div>';
 
+    const blockedCount = this.game.weather.scenario ? this.game.getWeatherBlockedRoutes().size : 0;
+    const weatherLabel = this.game.weather.label;
+    const weatherDetail = blockedCount > 0
+      ? `<span class="weather-blocked">${blockedCount} route${blockedCount > 1 ? "s" : ""} blocked</span>`
+      : `<span class="weather-clear">Lanes open</span>`;
+
+    // Sea state at the ship's actual position (interpolated while in transit).
+    let seaHtml = "";
+    if (this.game.weather.scenario) {
+      let nx, ny;
+      if (s.traveling) {
+        const from = this.game.map.ports[s.travelFrom], to = this.game.map.ports[s.travelTo];
+        const totalDays = s.travelElapsed + s.travelDaysRemaining;
+        const t = totalDays > 0 ? s.travelElapsed / totalDays : 0;
+        nx = from.nx + t * (to.nx - from.nx);
+        ny = from.ny + t * (to.ny - from.ny);
+      } else {
+        const port = this.game.map.ports[s.currentPort];
+        nx = port.nx; ny = port.ny;
+      }
+      const res = this.game.weather.getResistanceAt(nx, ny, s.day);
+      const sea = this.game.weather.seaState(res);
+      seaHtml = `<div class="weather-status"><span class="weather-label">Sea state</span><span class="sea-state ${sea.cls}">${sea.label}</span></div>`;
+    }
+
     this.els.shipStatus.innerHTML =
       `<h2>Ship Status</h2>` +
       `<div class="ship-location">${loc}</div>` +
+      `<div class="weather-status"><span class="weather-label">Weather: ${weatherLabel}</span>${weatherDetail}</div>` +
+      seaHtml +
       `<div class="cargo-bar"><span>Cargo</span><span>${total} / ${s.maxCargo}t</span></div>` +
       `<div class="cargo-bar-visual"><div class="cargo-bar-fill" style="width:${(total / s.maxCargo) * 100}%"></div></div>` +
       `<div class="cargo-list">${cargoHtml}</div>`;
@@ -106,18 +133,21 @@ class UI {
       const target = this.game.map.ports[idx];
       const hasReq = this.game.getRequestsAtPort(idx).length > 0;
       const isContested = this.game.isPortContested(idx);
-      
+      const isStorm = !isContested && this.game.isRouteWeatherBlocked(s.currentPort, idx);
+
       let badge = "";
       if (isContested) {
         badge = '<span class="nav-badge contested">CONTESTED</span>';
+      } else if (isStorm) {
+        badge = '<span class="nav-badge storm">STORM</span>';
       } else if (target.type === "base") {
         badge = '<span class="nav-badge base">BASE</span>';
       } else if (hasReq) {
         badge = '<span class="nav-badge request">REQ</span>';
       }
 
-      const disabledAttr = isContested ? "disabled" : "";
-      const daysText = isContested ? "Blocked" : `${days}d`;
+      const disabledAttr = (isContested || isStorm) ? "disabled" : "";
+      const daysText = isContested ? "Blocked" : isStorm ? "Storm" : `${days}d`;
 
       html += `<button class="btn-nav" ${disabledAttr} onclick="game.startTravel(${idx})">` +
         `<span>${target.name} ${badge}</span><span class="nav-days">${daysText}</span></button>`;

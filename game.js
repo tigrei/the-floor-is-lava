@@ -24,6 +24,13 @@ class Game {
 
     this._initBaseInventories();
 
+    this.weather = new WeatherSystem();
+    this.weather.load().then(label => {
+      this.ui.addLog(1, `Weather pattern active: ${label}`, "neutral");
+      this._render();
+      this.ui.renderSidebar();
+    });
+
     this._generateRequest();
     this._generateRequest();
     this._generateRequest();
@@ -67,6 +74,10 @@ class Game {
     if (days === null || this.state.traveling || this.state.gameOver) return;
     if (this.isPortContested(targetPort)) {
       this.ui.addLog(this.state.day, `Cannot set course to ${this.map.ports[targetPort].name} — port is contested.`, "bad");
+      return;
+    }
+    if (this.isRouteWeatherBlocked(this.state.currentPort, targetPort)) {
+      this.ui.addLog(this.state.day, `Cannot transit to ${this.map.ports[targetPort].name} — route blocked by storm.`, "bad");
       return;
     }
     const s = this.state;
@@ -270,6 +281,24 @@ class Game {
     return s;
   }
 
+  isRouteWeatherBlocked(fromIdx, toIdx) {
+    return this.weather.isRouteBlocked(
+      this.map.ports[fromIdx],
+      this.map.ports[toIdx],
+      this.state.day
+    );
+  }
+
+  getWeatherBlockedRoutes() {
+    const blocked = new Set();
+    for (const [a, b] of this.map.connections) {
+      if (this.weather.isRouteBlocked(this.map.ports[a], this.map.ports[b], this.state.day)) {
+        blocked.add(`${Math.min(a, b)}-${Math.max(a, b)}`);
+      }
+    }
+    return blocked;
+  }
+
   // --- Requests ---
 
   _generateRequest() {
@@ -373,7 +402,7 @@ class Game {
   }
 
   _render() {
-    this.map.render(this.state, this.getRequestPorts(), this.getContestedPorts());
+    this.map.render(this.state, this.getRequestPorts(), this.getContestedPorts(), this.getWeatherBlockedRoutes());
     document.getElementById("day-counter").textContent = `Day ${this.state.day}`;
     document.getElementById("score-display").innerHTML = `Delivered: ${this.score.fulfilled}&ensp;<span class="failed-section">Failed: ${this.score.failed}</span>`;
   }
