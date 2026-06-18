@@ -244,7 +244,7 @@ class UI {
       `<ul style="margin-left: 16px; margin-bottom: 12px; list-style-type: square; line-height: 1.4;">` +
       `<li style="margin-bottom: 4px;"><b>Load Cargo</b>: Pick up vital construction materials, communication grids, mobile shelters, and heavy machinery at Base Ports.</li>` +
       `<li style="margin-bottom: 4px;"><b>Route Optimization</b>: Deliver requests to contested sites before deadlines expire.</li>` +
-      `<li style="margin-bottom: 4px;"><b>Prevent Domino Effect</b>: Critical ports will roll to become <b>CONTESTED</b>, locking down sea lanes until neighboring nodes facilitate a recovery.</li>` +
+      `<li style="margin-bottom: 4px;"><b>Prevent Domino Effect</b>: If ports remain unsupplied in a high-need status, their urgency escalates. Critical ports will roll to become <b>CONTESTED</b>, blocking sea lanes until neighboring base nodes facilitate a recovery.</li>` +
       `</ul>` +
       `<p style="margin-bottom: 8px; font-weight: bold; color: var(--gold);">3. EXECUTION WINDOW</p>` +
       `<p>Deliver maximum tonnage within <b>60 Days</b>. Hostile forces are monitoring. Good luck, Commander.</p>` +
