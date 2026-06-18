@@ -23,13 +23,20 @@
       </section>
 
       <aside id="sidebar">
-        <div id="ship-status"></div>
-        <div id="actions-panel"></div>
-        <div id="requests-panel"></div>
+
+        <!-- Scrollable container for the dynamic operations elements -->
+        <div id="sidebar-scroll-area">
+          <div id="ship-status"></div>
+          <div id="actions-panel"></div>
+          <div id="requests-panel"></div>
+        </div>
+
+        <!-- Stable bottom operations log -->
         <div id="log">
           <h3>Ops Log</h3>
           <ul id="log-entries"></ul>
         </div>
+
       </aside>
     </div>
 

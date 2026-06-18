@@ -209,10 +209,20 @@ class UI {
   addLog(day, message, type = "neutral") {
     const li = document.createElement("li");
     li.textContent = `Day ${day}: ${message}`;
+    
     const cls = { bad: "event-bad", good: "event-good", port: "event-port" };
     if (cls[type]) li.classList.add(cls[type]);
+    
     this.els.logEntries.prepend(li);
-    while (this.els.logEntries.children.length > 40) this.els.logEntries.lastChild.remove();
+    
+    while (this.els.logEntries.children.length > 40) {
+      this.els.logEntries.lastChild.remove();
+    }
+
+    // SCROLL FIX: Scroll the UL element to the top so new prepended entry is immediately visible
+    if (this.els.logEntries) {
+      this.els.logEntries.scrollTop = 0;
+    }
   }
 
   showGameOver(score) {
