@@ -22,6 +22,8 @@ class Game {
     this._nextRequestDay = 0;
     this._tickTimer = null;
 
+    this._initBaseInventories();
+
     this._generateRequest();
     this._generateRequest();
     this._generateRequest();
@@ -30,6 +32,17 @@ class Game {
     this._render();
     this.ui.renderSidebar();
     this.ui.addLog(1, `Docked at ${this.map.ports[this.state.currentPort].name}. Three supply requests are active.`, "port");
+  }
+
+  _initBaseInventories() {
+    for (const port of this.map.ports) {
+      const scenario = BASE_STARTING_INVENTORIES.find(s => s.name === port.name);
+      if (scenario) {
+        port.inventory = { ...scenario.inventory };
+      } else {
+        port.inventory = {};
+      }
+    }
   }
 
   getCargoTotal() {
