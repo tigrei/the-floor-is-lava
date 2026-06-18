@@ -5,7 +5,7 @@ class Game {
 
     this.state = {
       day: 1,
-      currentPort: 11,
+      currentPort: 1,
       traveling: false,
       travelFrom: null,
       travelTo: null,
