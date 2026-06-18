@@ -33,12 +33,19 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 /* Weather vector-field overlay — advances with the day. Invert so the storm's dark
    arrows glow over the dark sea; screen blend + opacity keep it atmospheric, and it
    never intercepts clicks (navigation happens on the canvas beneath it).
-   inset:48px matches the canvas port padding (pad=48 in map.js _toPixel), and
-   scaleY(-1) flips the SVG (row 0 at top) to match the game's top→row 49 mapping,
-   so the storm lines up with the blocked routes. */
+   The 48px offset + (100% - 96px) size matches the canvas port padding
+   (pad=48 in map.js _toPixel). Explicit width/height (not just insets) are required
+   so the <img> actually stretches — an absolutely-positioned replaced element with
+   auto width/height does NOT fill reliably across browsers (Edge/Surface leave it at
+   the SVG's intrinsic size). scaleY(-1) flips the SVG (row 0 at top) to match the
+   game's top→row 49 mapping, so the storm lines up with the blocked routes. */
 #weather-overlay {
   position: absolute;
-  inset: 48px;
+  top: 48px;
+  left: 48px;
+  width: calc(100% - 96px);
+  height: calc(100% - 96px);
+  object-fit: fill;
   pointer-events: none;
   opacity: 0.5;
   mix-blend-mode: screen;
