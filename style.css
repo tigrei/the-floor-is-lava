@@ -22,6 +22,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-dark
 #controls { display: flex; align-items: center; gap: 16px; }
 #day-counter, #score-display { color: var(--text-muted); font-size: 0.9rem; }
 #score-display { color: var(--success); font-weight: 600; }
+.failed-section { color: var(--danger); font-weight: 600; }
 
 /* Layout */
 #main { display: flex; flex: 1; overflow: hidden; }
