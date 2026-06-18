@@ -279,10 +279,6 @@ class GameMap {
 
  _onPortClick(port, index) {
     console.log(`Clicked map port: ${port.name} (Index: ${index})`);
-    if (this.lastShipState.currentPort === index) {
-      game.ui.showToast("Already at this port.", "warning"); 
-      return;
-    }
 
     if (this.lastShipState.traveling) {
       game.ui.showToast("Ship is in transit. Cannot navigate right now.", "warning");
@@ -293,6 +289,7 @@ class GameMap {
       const isContested = game.isPortContested(index);
       const neighbors = this.getConnected(this.lastShipState.currentPort);
       const isNeighbor = neighbors.some(n => n.port === index);
+      const isCurrentPort = this.lastShipState.currentPort === index;
       const travelDays = this.getTravelTime(this.lastShipState.currentPort, index);
       const targetInventory = port.type === "base" ? port.inventory : null;
       const requestsAtPort = game.requests.filter(r =>
@@ -305,6 +302,7 @@ class GameMap {
         requests: requestsAtPort,
         isContested,
         isNeighbor,
+        isCurrentPort,
         onConfirm: () => game.startTravel(index),
       });
     } else {

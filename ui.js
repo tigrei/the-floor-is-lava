@@ -23,9 +23,23 @@ class UI {
   _renderShipStatus() {
     const state = this.game.state;
     const total = this.game.getCargoTotal();
-    const loc = state.traveling
-      ? `In transit → ${this.game.map.ports[state.travelTo].name} (${state.travelDaysRemaining}d remaining)`
-      : `Docked at ${this.game.map.ports[state.currentPort].name}`;
+    
+    let locationHtml;
+    if (state.traveling) {
+      const destPort = this.game.map.ports[state.travelTo];
+      locationHtml = 
+        `<div class="ship-location-container">` +
+        `<div class="ship-location-heading">In Transit</div>` +
+        `<div class="ship-location-subtitle">→ ${destPort.name} (${state.travelDaysRemaining}d remaining)</div>` +
+        `</div>`;
+    } else {
+      const currentPort = this.game.map.ports[state.currentPort];
+      locationHtml = 
+        `<div class="ship-location-container">` +
+        `<div class="ship-location-heading">${currentPort.name}</div>` +
+        `<div class="ship-location-subtitle">Currently Docked</div>` +
+        `</div>`;
+    }
 
     let cargoHtml = "";
     for (const [type, amt] of Object.entries(state.cargo)) {
@@ -35,7 +49,7 @@ class UI {
 
     this.els.shipStatus.innerHTML =
       `<h2>Ship Status</h2>` +
-      `<div class="ship-location">${loc}</div>` +
+      `${locationHtml}` +
       `<div class="cargo-bar"><span>Cargo</span><span>${total} / ${state.maxCargo}t</span></div>` +
       `<div class="cargo-bar-visual"><div class="cargo-bar-fill" style="width:${(total / state.maxCargo) * 100}%"></div></div>` +
       `<div class="cargo-list">${cargoHtml}</div>`;
@@ -181,7 +195,7 @@ class UI {
     });
   }
 
-  showTravelConfirm({ port, days, inventory, requests, isContested, isNeighbor, onConfirm }) {
+  showTravelConfirm({ port, days, inventory, requests, isContested, isNeighbor, isCurrentPort, onConfirm }) {
     const daysLabel = days === 1 ? "1 day" : `${days} days`;
     const portTypeTag = port.type === "base" ? '<span class="port-type-tag base">Base</span>' : '<span class="port-type-tag site">Site</span>';
     this.els.modalTitle.innerHTML = `${port.name} ${portTypeTag}`;
@@ -196,7 +210,9 @@ class UI {
       this.els.modalTitle.appendChild(closeBtn);
     }
     
-    if (isContested) {
+    if (isCurrentPort) {
+      this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle">Currently Docked</div>`);
+    } else if (isContested) {
       this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle contested">Warning: cannot travel to contested port.</div>`);
     } else if (!isNeighbor) {
       this.els.modalTitle.insertAdjacentHTML("beforeend", `<div class="modal-subtitle">Direct travel not available from current port.</div>`);
@@ -246,14 +262,14 @@ class UI {
       : "<div class=\"travel-section\"><strong>Requests at destination:</strong> None</div>";
 
     this.els.modalBody.innerHTML =
-      `${(isNeighbor && !isContested) ? `<div class="travel-summary">Set sail to ${port.name}? Estimated travel time: ${daysLabel}.</div>` : ""}` +
+      `${(isNeighbor && !isContested && !isCurrentPort) ? `<div class="travel-summary">Set sail to ${port.name}? Estimated travel time: ${daysLabel}.</div>` : ""}` +
       `${portDetailsHtml}` +
       `${inventoryHtml}` +
       `${requestHtml}`;
 
     this.els.modalChoices.innerHTML = "";
 
-    if (isNeighbor && !isContested) {
+    if (isNeighbor && !isContested && !isCurrentPort) {
       const travelBtn = document.createElement("button");
       travelBtn.textContent = "Travel";
       travelBtn.addEventListener("click", () => {
