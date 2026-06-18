@@ -35,7 +35,7 @@ function applyEventOutcome(outcome, state) {
 }
 
 function shouldEventTrigger() {
-  return Math.random() < 0.20;
+  return Math.random() < 0.10;
 }
 
 function shouldPortResupply() {

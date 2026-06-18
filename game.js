@@ -1,4 +1,6 @@
 class Game {
+  static MAX_WAIT_DAYS = 3; // days held before the crew may brave a storm-blocked lane
+
   constructor() {
     this.map = new GameMap("map-canvas");
     this.ui = new UI(this);
@@ -12,6 +14,8 @@ class Game {
       travelTo: null,
       travelElapsed: 0,
       travelDaysRemaining: 0,
+      waiting: false,
+      waitElapsed: 0,
       cargo: {},
       maxCargo: 100,
       gameOver: false,
@@ -45,7 +49,7 @@ class Game {
 
   _initBaseInventories() {
     for (const port of this.map.ports) {
-      const scenario = BASE_STARTING_INVENTORIES.find(s => s.name === port.name);
+      const scenario = BASE_STARTING_INVENTORIES.find(entry => entry.name === port.name);
       if (scenario) {
         port.inventory = { ...scenario.inventory };
       } else {
@@ -55,17 +59,17 @@ class Game {
   }
 
   getCargoTotal() {
-    return Object.values(this.state.cargo).reduce((a, b) => a + b, 0);
+    return Object.values(this.state.cargo).reduce((sum, amount) => sum + amount, 0);
   }
 
   getRequestPorts() {
-    const s = new Set();
-    for (const r of this.requests) { if (r.status === "active") s.add(r.destination); }
-    return s;
+    const activePorts = new Set();
+    for (const request of this.requests) { if (request.status === "active") activePorts.add(request.destination); }
+    return activePorts;
   }
 
   getRequestsAtPort(portIndex) {
-    return this.requests.filter(r => r.status === "active" && r.destination === portIndex);
+    return this.requests.filter(request => request.status === "active" && request.destination === portIndex);
   }
 
   // --- Travel ---
@@ -78,17 +82,17 @@ class Game {
       return;
     }
     if (this.isRouteWeatherBlocked(this.state.currentPort, targetPort)) {
-      this.ui.addLog(this.state.day, `Cannot transit to ${this.map.ports[targetPort].name} — route blocked by storm.`, "bad");
+      this.ui.addLog(this.state.day, `Cannot transit to ${this.map.ports[targetPort].name} — route blocked by storm. Hold position to wait it out.`, "bad");
       return;
     }
-    const s = this.state;
-    s.traveling = true;
-    s.travelFrom = s.currentPort;
-    s.travelTo = targetPort;
-    s.travelElapsed = 0;
-    s.travelDaysRemaining = days;
-    s.currentPort = null;
-    this.ui.addLog(s.day, `Underway to ${this.map.ports[targetPort].name}. ETA: ${days} day${days > 1 ? "s" : ""}.`, "port");
+    const state = this.state;
+    state.traveling = true;
+    state.travelFrom = state.currentPort;
+    state.travelTo = targetPort;
+    state.travelElapsed = 0;
+    state.travelDaysRemaining = days;
+    state.currentPort = null;
+    this.ui.addLog(state.day, `Underway to ${this.map.ports[targetPort].name}. ETA: ${days} day${days > 1 ? "s" : ""}.`, "port");
     this._render();
     this.ui.renderSidebar();
     this._scheduleTick();
@@ -148,44 +152,12 @@ class Game {
     if (allowEvents && shouldEventTrigger()) {
       const event = getRandomEvent();
       const message = await this.ui.showEvent(event, state);
-      this.ui.addLog(state.day, message, "neutral");
+      this.ui.addLog(state.day, `⚠ ${event.name} — ${message}`, "event");
       this._render();
       this.ui.renderSidebar();
     }
 
-    if (shouldPortResupply()) {
-      const randomize = (arr) => {
-        const randNum = Math.floor(Math.random() * arr.length) + 1;
-        const shuffled = [...arr].sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, randNum);
-        return selected
-      }
-
-      const basePorts = this.map.ports.filter((port) => port.type === "base");
-      const selectedBases = randomize(basePorts)
-
-      selectedBases.forEach((base) => {
-        const materials = Object.keys(base.inventory)
-        if (materials.length === 0) {
-          throw new Error("Empty inventory. We should not have gotten here")
-        }
-
-        const selectedMaterials = randomize(materials)
-        const logOutput = selectedMaterials.map(material => `\t- ${material}`).join('\n')
-
-        selectedMaterials.forEach((material) => {
-          let currentValue = base.inventory[material]
-
-          // Generate random integer greater than existing value
-          const min = currentValue + 1;
-          const max = currentValue + 50;
-          const newValue = Math.floor(Math.random() * (max - min + 1)) + min;
-          base.inventory[material] = newValue
-        })
-
-        this.ui.addLog(state.day, `${base.name} Resupplied!\n${logOutput}`, "good")
-      })
-    }
+    if (shouldPortResupply()) this._maybeResupply(state.day);
 
     if (wasTraveling && state.travelDaysRemaining <= 0) {
       state.traveling = false;
@@ -204,6 +176,107 @@ class Game {
     }
 
     if (scheduleNext) this._scheduleTick();
+  }
+
+  _maybeResupply(day) {
+    const randomize = (arr) => {
+      const randNum = Math.floor(Math.random() * arr.length) + 1;
+      const shuffled = [...arr].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, randNum);
+    };
+
+    const basePorts = this.map.ports.filter((port) => port.type === "base");
+    const selectedBases = randomize(basePorts);
+
+    selectedBases.forEach((base) => {
+      const materials = Object.keys(base.inventory);
+      if (materials.length === 0) return;
+
+      const selectedMaterials = randomize(materials);
+      const logOutput = selectedMaterials.map(material => `\t- ${material}`).join('\n');
+
+      selectedMaterials.forEach((material) => {
+        const currentValue = base.inventory[material];
+        const min = currentValue + 1;
+        const max = currentValue + 50;
+        base.inventory[material] = Math.floor(Math.random() * (max - min + 1)) + min;
+      });
+
+      this.ui.addLog(day, `${base.name} Resupplied!\n${logOutput}`, "good");
+    });
+  }
+
+  // --- Weather hold ---
+
+  // A connected route the ship could actually take right now (not contested, not storm-blocked).
+  _hasOpenRoute() {
+    if (this.state.currentPort == null) return true;
+    const conns = this.map.getConnected(this.state.currentPort);
+    return conns.some(({ port }) =>
+      !this.isPortContested(port) && !this.isRouteWeatherBlocked(this.state.currentPort, port));
+  }
+
+  // True when every way out is blocked by weather/contested — the ship is stranded.
+  isStranded() {
+    if (this.state.currentPort == null) return false;
+    const conns = this.map.getConnected(this.state.currentPort);
+    return conns.length > 0 && !this._hasOpenRoute();
+  }
+
+  // Hold position and let days pass (paying the deadline penalty). Stops early if a
+  // lane reopens; after MAX_WAIT_DAYS the crew braves the storm and may push through.
+  holdPosition() {
+    const state = this.state;
+    if (state.traveling || state.waiting || state.gameOver || state.currentPort == null) return;
+    state.waiting = true;
+    state.waitElapsed = 0;
+    this.ui.addLog(state.day, `Holding position at ${this.map.ports[state.currentPort].name} to wait out the weather.`, "port");
+    this._render();
+    this.ui.renderSidebar();
+    this._scheduleWaitTick();
+  }
+
+  _scheduleWaitTick() {
+    if (!this.state.waiting || this.state.gameOver) return;
+    this._tickTimer = setTimeout(() => this._doWaitTick(), 700);
+  }
+
+  _doWaitTick() {
+    const state = this.state;
+    state.day++;
+    state.waitElapsed++;
+
+    this._checkDeadlines();
+    this._maybeGenerateRequest();
+    if (shouldPortResupply()) this._maybeResupply(state.day);
+    this._render();
+    this.ui.renderSidebar();
+
+    if (state.day >= 60) {
+      state.waiting = false;
+      this._endGame();
+      return;
+    }
+
+    if (this._hasOpenRoute()) {
+      state.waiting = false;
+      this.ui.addLog(state.day, `Seas have eased — lanes are open from ${this.map.ports[state.currentPort].name}.`, "good");
+      this._render();
+      this.ui.renderSidebar();
+      return;
+    }
+
+    // Crew has weathered it — force the storm to break so seas subside and lanes reopen.
+    if (state.waitElapsed >= Game.MAX_WAIT_DAYS) {
+      state.waiting = false;
+      this.weather.calm(state.day);
+      this.ui.addLog(state.day, `The storm has broken after ${state.waitElapsed} days of holding — seas are subsiding and lanes are reopening.`, "good");
+      this._render();
+      this.ui.renderSidebar();
+      return;
+    }
+
+    this._scheduleWaitTick();
   }
 
   // --- Cargo ---
@@ -233,12 +306,12 @@ class Game {
   }
 
   quickLoad(requestId) {
-    const req = this.requests.find(r => r.id === requestId);
+    const req = this.requests.find(request => request.id === requestId);
     if (!req || req.status !== "active")
       return;
 
     for (const [type, needed] of Object.entries(req.remaining)) {
-      const totalNeededAcrossRequests = this.requests.map(r => r.remaining[type] || 0).reduce((a, b) => a + b, 0);    
+      const totalNeededAcrossRequests = this.requests.map(request => request.remaining[type] || 0).reduce((sum, amount) => sum + amount, 0);
       const have = this.state.cargo[type] || 0;
       if (totalNeededAcrossRequests > have) {
         const totalStillNeeded = totalNeededAcrossRequests - have;
@@ -251,7 +324,7 @@ class Game {
   // --- Delivery ---
 
   deliverCargo(requestId) {
-    const req = this.requests.find(r => r.id === requestId);
+    const req = this.requests.find(request => request.id === requestId);
     if (!req || req.status !== "active" || req.destination !== this.state.currentPort) return;
     let delivered = 0;
     for (const type of Object.keys(req.remaining)) {
@@ -283,7 +356,7 @@ class Game {
   // --- Requests ---
 
   isPortContested(portIndex) {
-    return this.requests.some(r => r.destination === portIndex && r.status === "contested");
+    return this.requests.some(request => request.destination === portIndex && request.status === "contested");
   }
 
   _getSuppliedNeighborsCount(portIndex) {
@@ -294,9 +367,9 @@ class Game {
       if (neighborPort.type === "base") {
         count++;
       } else {
-        const hasActiveOrContested = this.requests.some(r =>
-          r.destination === conn.port &&
-          (r.status === "active" || r.status === "contested")
+        const hasActiveOrContested = this.requests.some(request =>
+          request.destination === conn.port &&
+          (request.status === "active" || request.status === "contested")
         );
         if (!hasActiveOrContested) {
           count++;
@@ -307,11 +380,11 @@ class Game {
   }
 
   getContestedPorts() {
-    const s = new Set();
-    for (const r of this.requests) {
-      if (r.status === "contested") s.add(r.destination);
+    const contestedPorts = new Set();
+    for (const request of this.requests) {
+      if (request.status === "contested") contestedPorts.add(request.destination);
     }
-    return s;
+    return contestedPorts;
   }
 
   isRouteWeatherBlocked(fromIdx, toIdx) {
@@ -324,9 +397,9 @@ class Game {
 
   getWeatherBlockedRoutes() {
     const blocked = new Set();
-    for (const [a, b] of this.map.connections) {
-      if (this.weather.isRouteBlocked(this.map.ports[a], this.map.ports[b], this.state.day)) {
-        blocked.add(`${Math.min(a, b)}-${Math.max(a, b)}`);
+    for (const [portA, portB] of this.map.connections) {
+      if (this.weather.isRouteBlocked(this.map.ports[portA], this.map.ports[portB], this.state.day)) {
+        blocked.add(`${Math.min(portA, portB)}-${Math.max(portA, portB)}`);
       }
     }
     return blocked;
@@ -335,9 +408,9 @@ class Game {
   // --- Requests ---
 
   _generateRequest() {
-    const sites = this.map.ports.map((p, i) => ({ p, i })).filter(x => x.p.type === "site");
-    const taken = new Set(this.requests.filter(r => r.status === "active" || r.status === "contested").map(r => r.destination));
-    const avail = sites.filter(s => !taken.has(s.i));
+    const sites = this.map.ports.map((port, index) => ({ port, index })).filter(entry => entry.port.type === "site");
+    const taken = new Set(this.requests.filter(request => request.status === "active" || request.status === "contested").map(request => request.destination));
+    const avail = sites.filter(site => !taken.has(site.index));
     if (avail.length === 0) return;
 
     const site = avail[Math.floor(Math.random() * avail.length)];
@@ -347,8 +420,8 @@ class Game {
 
     this.requests.push({
       id: this._nextId++,
-      destination: site.i,
-      destinationName: site.p.name,
+      destination: site.index,
+      destinationName: site.port.name,
       supplies: { ...tmpl.supplies },
       remaining: { ...tmpl.supplies },
       stageDaysLeft,
@@ -360,12 +433,12 @@ class Game {
     });
     this.score.totalRequests++;
     if (this.state.day > 1) {
-      this.ui.addLog(this.state.day, `New request: ${tmpl.mission} → ${site.p.name} [${urgency.toUpperCase()}]`, "port");
+      this.ui.addLog(this.state.day, `New request: ${tmpl.mission} → ${site.port.name} [${urgency.toUpperCase()}]`, "port");
     }
   }
 
   _maybeGenerateRequest() {
-    const active = this.requests.filter(r => r.status === "active" || r.status === "contested").length;
+    const active = this.requests.filter(request => request.status === "active" || request.status === "contested").length;
     if (this.state.day >= this._nextRequestDay && active < 5) {
       this._generateRequest();
       this._nextRequestDay = this.state.day + 7 + Math.floor(Math.random() * 4);
