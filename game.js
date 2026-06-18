@@ -22,6 +22,8 @@ class Game {
     this._nextRequestDay = 0;
     this._tickTimer = null;
 
+    this._initBaseInventories();
+
     this._generateRequest();
     this._generateRequest();
     this._generateRequest();
@@ -30,6 +32,17 @@ class Game {
     this._render();
     this.ui.renderSidebar();
     this.ui.addLog(1, `Docked at ${this.map.ports[this.state.currentPort].name}. Three supply requests are active.`, "port");
+  }
+
+  _initBaseInventories() {
+    for (const port of this.map.ports) {
+      const scenario = BASE_STARTING_INVENTORIES.find(s => s.name === port.name);
+      if (scenario) {
+        port.inventory = { ...scenario.inventory };
+      } else {
+        port.inventory = {};
+      }
+    }
   }
 
   getCargoTotal() {
@@ -260,7 +273,7 @@ class Game {
     const site = avail[Math.floor(Math.random() * avail.length)];
     const tmpl = REQUEST_TEMPLATES[Math.floor(Math.random() * REQUEST_TEMPLATES.length)];
     const urgency = tmpl.urgencyPool[Math.floor(Math.random() * tmpl.urgencyPool.length)];
-    const stageDaysLeft = { low: 10, medium: 8, high: 6 }[urgency];
+    const stageDaysLeft = { low: 15, medium: 12, high: 10 }[urgency];
 
     this.requests.push({
       id: this._nextId++,
@@ -308,11 +321,11 @@ class Game {
           if (req.stageDaysLeft <= 0) {
             if (req.urgency === "low") {
               req.urgency = "medium";
-              req.stageDaysLeft = 8;
+              req.stageDaysLeft = 12;
               this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now MEDIUM urgency.`, "neutral");
             } else if (req.urgency === "medium") {
               req.urgency = "high";
-              req.stageDaysLeft = 6;
+              req.stageDaysLeft = 10;
               this.ui.addLog(this.state.day, `Escalation: Request at ${req.destinationName} is now HIGH urgency!`, "bad");
             } else if (req.urgency === "high") {
               req.urgency = "critical";

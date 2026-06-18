@@ -13,32 +13,10 @@ class GameMap {
       }
     };
 
-    // Port definitions: { name, x, y } in normalized 0–1 space
-    // (mapped to actual canvas size during render)
-    // inventory keys are cargo_id values from supply-data.js (SUPPLY_TYPES)
-    this.ports = [
-      { name: "Yokosuka",     nx: 0.97, ny: 0.03, type: "base",
-        inventory: { "CARGO-034": 40, "CARGO-033": 30, "CARGO-004": 30, "CARGO-008": 20, "CARGO-010": 10, "CARGO-028": 5, "CARGO-001": 5} ,
-      },
-      { name: "Sasebo",       nx: 0.7, ny: 0.15, type: "base",
-        inventory: { "CARGO-010": 4, "CARGO-013": 30, "CARGO-001": 30, "CARGO-006": 20, "CARGO-028": 20, "CARGO-004": 5, "CARGO-033": 5 } 
-      },
-      { name: "Okinawa",      nx: 0.64, ny: 0.47, type: "site" },
-      { name: "Kunsan",  nx: 0.63, ny: 0.08, type: "base",
-        inventory: { "CARGO-013": 3, "CARGO-008": 30, "CARGO-028": 30, "CARGO-033": 25, "CARGO-010": 5, "CARGO-004": 15, "CARGO-001": 5} ,
-       },
-      { name: "Batanes",      nx: 0.42, ny: 0.57, type: "site" },
-      { name: "Subic Bay",    nx: 0.35, ny: 0.70, type: "base",
-        inventory: { "CARGO-013": 3, "CARGO-008": 30, "CARGO-028": 30, "CARGO-033": 20, "CARGO-010": 5, "CARGO-004": 10, "CARGO-001": 5 }
-      }, 
-      { name: "Palawan",      nx: 0.28, ny: 1.02, type: "site" },
-      { name: "Guam",         nx: 0.9, ny: 1.02, type: "base",
-        inventory: { "CARGO-013": 5, "CARGO-001": 5, "CARGO-006": 15, "CARGO-004": 30, "CARGO-027": 25, "CARGO-010": 10, "CARGO-034": 10, "CARGO-028": 15 }
-      },
-      { name: "Camilo Osias", nx: 0.45, ny: 0.86, type: "site"},
-      { name: "Kyogamisaki",  nx: 0.87, ny: 0.0, type: "site" },
-      { name: "Mujuk",        nx: 0.67, ny: 0.036, type: "site" }
-    ];
+    // Port definitions live in data_master/ports.js (global PORTS), loaded before map.js.
+    // nx/ny are stylized canvas positions used for rendering; ports also carry real-world
+    // lat/lon and WPI data. Array order is significant — `connections` indexes into it.
+    this.ports = PORTS;
 
     this.connections = [
       [0, 1, 3], [0, 2, 4],
