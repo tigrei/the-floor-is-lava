@@ -15,11 +15,12 @@ class GameMap {
 
     // Port definitions: { name, x, y } in normalized 0–1 space
     // (mapped to actual canvas size during render)
+    // inventory keys are cargo_id values from supply-data.js (SUPPLY_TYPES)
     this.ports = [
       { name: "Yokosuka",     nx: 0.82, ny: 0.08, type: "base",
-        inventory: { power: 40, comms: 35, shelter: 25, tools: 20, construction: 15, bridging: 10, water: 5, heavy: 5 } },
+        inventory: { "CARGO-034": 40, "CARGO-033": 30, "CARGO-004": 30, "CARGO-008": 20, "CARGO-010": 10, "CARGO-028": 5, "CARGO-001": 5} },
       { name: "Sasebo",       nx: 0.58, ny: 0.12, type: "base",
-        inventory: { bridging: 40, construction: 35, heavy: 25, tools: 20, water: 15, shelter: 10, power: 5, comms: 5 } },
+        inventory: { "CARGO-010": 4, "CARGO-013": 30, "CARGO-001": 30, "CARGO-006": 20, "CARGO-028": 20, "CARGO-004": 5, "CARGO-033": 5 } },
       { name: "Okinawa",      nx: 0.68, ny: 0.25, type: "site" },
       { name: "Miyako-jima",  nx: 0.55, ny: 0.33, type: "site" },
       { name: "Yonaguni",     nx: 0.43, ny: 0.30, type: "site" },
@@ -27,11 +28,12 @@ class GameMap {
       { name: "Pratas",       nx: 0.32, ny: 0.54, type: "site" },
       { name: "Batanes",      nx: 0.42, ny: 0.57, type: "site" },
       { name: "Subic Bay",    nx: 0.35, ny: 0.70, type: "base",
-        inventory: { construction: 30, tools: 35, water: 30, comms: 20, bridging: 15, power: 10, shelter: 10, heavy: 5 } },
-      { name: "Palawan",      nx: 0.22, ny: 0.80, type: "site" },
+        inventory: { "CARGO-013": 3, "CARGO-008": 30, "CARGO-028": 30, "CARGO-033": 20, "CARGO-010": 5, "CARGO-004": 10, "CARGO-001": 5 } },
+      { name: "Palawan",      nx: 0.22, ny: 0.80, type: "site" ,
+        inventory: { "CARGO-013": 3, "CARGO-008": 30, "CARGO-028": 30, "CARGO-033": 25, "CARGO-010": 5, "CARGO-004": 15, "CARGO-001": 5} },
       { name: "Itu Aba",      nx: 0.15, ny: 0.62, type: "site" },
       { name: "Guam",         nx: 0.90, ny: 0.44, type: "base",
-        inventory: { construction: 50, heavy: 40, shelter: 30, power: 15, tools: 10, bridging: 10, comms: 5, water: 10 } },
+        inventory: { "CARGO-013": 5, "CARGO-001": 5, "CARGO-006": 15, "CARGO-004": 30, "CARGO-027": 25, "CARGO-010": 10, "CARGO-034": 10, "CARGO-028": 15 } },
     ];
 
     this.connections = [
