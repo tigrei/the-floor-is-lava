@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700&display=swap');
 
         :root {
-            --bg-color: #0f2027; /* Deep ocean */
+            --bg-color: #0f2027;
+            /* Deep ocean */
             --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
             --lava-orange: #ff5722;
             --lava-glow: #ff9800;
@@ -18,7 +20,8 @@
             --glass-border: rgba(255, 255, 255, 0.1);
         }
 
-        body, html {
+        body,
+        html {
             margin: 0;
             padding: 0;
             width: 100%;
@@ -70,8 +73,15 @@
         }
 
         @keyframes pulse {
-            0% { transform: scale(1) rotate(-5deg); opacity: 0.15; }
-            100% { transform: scale(1.05) rotate(-3deg); opacity: 0.25; }
+            0% {
+                transform: scale(1) rotate(-5deg);
+                opacity: 0.15;
+            }
+
+            100% {
+                transform: scale(1.05) rotate(-3deg);
+                opacity: 0.25;
+            }
         }
 
         .slider {
@@ -102,7 +112,7 @@
             padding: 4rem;
             max-width: 900px;
             width: 100%;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
             position: relative;
             overflow: hidden;
         }
@@ -110,7 +120,9 @@
         .glass-panel::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0;
+            top: 0;
+            left: 0;
+            right: 0;
             height: 4px;
             background: linear-gradient(90deg, var(--lava-orange), #00d2ff);
         }
@@ -137,7 +149,8 @@
             gap: 1rem;
         }
 
-        p, li {
+        p,
+        li {
             font-size: 1.25rem;
             line-height: 1.8;
             color: #d8e3e7;
@@ -173,7 +186,7 @@
             border-left: 4px solid var(--lava-orange);
             padding-left: 2rem;
             margin-bottom: 2rem;
-            background: rgba(255,87,34,0.05);
+            background: rgba(255, 87, 34, 0.05);
             padding: 1.5rem 2rem;
             border-radius: 0 12px 12px 0;
         }
@@ -199,7 +212,7 @@
             display: flex;
             gap: 1rem;
             z-index: 20;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             padding: 0.5rem 1rem;
             border-radius: 50px;
             backdrop-filter: blur(10px);
@@ -219,7 +232,7 @@
 
         .nav-btn:hover {
             opacity: 1;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .progress {
@@ -231,9 +244,9 @@
             z-index: 20;
             transition: width 0.3s ease;
         }
-
     </style>
 </head>
+
 <body>
 
     <div class="bg-shapes">
@@ -244,13 +257,14 @@
     <div class="progress" id="progressBar"></div>
 
     <div class="slider" id="slider">
-        
+
         <!-- Slide 1: Title -->
         <div class="slide">
             <div class="glass-panel" style="text-align: center;">
                 <span class="emoji-icon">🌋 ⚓ 🌊</span>
                 <h1 style="font-size: 5rem; margin-bottom: 0.5rem;">L.A.V.A.</h1>
-                <p style="font-size: 1.5rem; color: var(--lava-glow); font-weight: 600; letter-spacing: 2px;">LITTORAL ASSET & VESSEL ALLOCATION</p>
+                <p style="font-size: 1.5rem; color: var(--lava-glow); font-weight: 600; letter-spacing: 2px;">LITTORAL
+                    ASSET & VESSEL ALLOCATION</p>
                 <p style="font-size: 1.2rem; color: var(--text-muted); max-width: 600px; margin: 2rem auto 0;">
                     A logistics strategy simulation for First Island Chain defense.
                 </p>
@@ -261,10 +275,11 @@
         <div class="slide">
             <div class="glass-panel">
                 <h2><span class="emoji-icon" style="margin:0; font-size: 2.5rem;">🚧</span> Team: The Floor is Lava</h2>
-                <p>We are <strong>U.S. Navy Civilian Software Developers, Data Scientists, and DevOps Engineers</strong>.</p>
+                <p>We are <strong>U.S. Navy Civilian Software Developers, Data Scientists, and DevOps
+                        Engineers</strong>.</p>
                 <ul>
                     <li>From Naval Facilities Engineering Command (NAVFAC).</li>
-                    <li>Specifically from <strong>The NITC</strong>.</li>
+                    <li>Specifically from <strong>NITC</strong>.</li>
                     <li>Supported by an additional team member from the NAVFAC Expeditionary Warfare Center.</li>
                 </ul>
             </div>
@@ -273,15 +288,16 @@
         <!-- Slide 3: Quotes -->
         <div class="slide">
             <div class="glass-panel">
-                <h2><span class="emoji-icon" style="margin:0; font-size: 2.5rem;">⚙️</span> The Importance of Logistics</h2>
-                
+                <h2><span class="emoji-icon" style="margin:0; font-size: 2.5rem;">⚙️</span> The Importance of Logistics
+                </h2>
+
                 <div class="quote-box">
                     <div class="quote-text">"Amateurs talk tactics, Professionals Study Logistics"</div>
                     <div class="quote-author">— General Omar Bradley, U.S. Army</div>
                 </div>
 
                 <div class="quote-box">
-                    <div class="quote-text">"An Army Marches on its stomach"</div>
+                    <div class="quote-text">"An army marches on its stomach"</div>
                     <div class="quote-author">— Napoleon</div>
                 </div>
 
@@ -297,10 +313,12 @@
             <div class="glass-panel">
                 <h2><span class="emoji-icon" style="margin:0; font-size: 2.5rem;">🌍</span> The Modern Context</h2>
                 <p><strong>Lessons from Ukraine</strong></p>
-                <p>We see the importance of logistics today in Ukraine, where the Ukrainian military is advancing on multiple fronts all backed by attacks on logistic supply chains.</p>
+                <p>We see the importance of logistics today in Ukraine, where the Ukrainian military is advancing on
+                    multiple fronts all backed by attacks on logistic supply chains.</p>
                 <br>
                 <p><strong>The Pacific Theater</strong></p>
-                <p>We know in a conflict scenario within the Strait of Taiwan and the South China Sea, logistics will be absolutely paramount in a First Island Chain defense.</p>
+                <p>We know in a conflict scenario within the Strait of Taiwan and the South China Sea, logistics will be
+                    absolutely paramount in a First Island Chain defense.</p>
             </div>
         </div>
 
@@ -308,8 +326,10 @@
         <div class="slide">
             <div class="glass-panel">
                 <h2><span class="emoji-icon" style="margin:0; font-size: 2.5rem;">🗺️</span> 1. SITUATION</h2>
-                <p>You are in command of supply and delivery operations for expeditionary forces in the contested First Island Chain.</p>
-                <p>Under intense Gray Zone pressure, neighboring ports depend on your logistics support to maintain deterrence.</p>
+                <p>You are in command of supply and delivery operations for expeditionary forces in the contested First
+                    Island Chain.</p>
+                <p>Under intense Gray Zone pressure, neighboring ports depend on your logistics support to maintain
+                    deterrence.</p>
             </div>
         </div>
 
@@ -318,9 +338,13 @@
             <div class="glass-panel">
                 <h2><span class="emoji-icon" style="margin:0; font-size: 2.5rem;">🎯</span> 2. MISSION OBJECTIVES</h2>
                 <ul>
-                    <li><strong>Load Cargo:</strong> Pick up vital construction materials, communication grids, mobile shelters, and heavy machinery at Base Ports.</li>
-                    <li><strong>Route Optimization:</strong> Deliver requests to contested sites before deadlines expire.</li>
-                    <li><strong>Prevent Domino Effect:</strong> If ports remain unsupplied in a high-need status, their urgency escalates. Critical ports will roll to become CONTESTED, blocking sea lanes until neighboring base nodes facilitate a recovery.</li>
+                    <li><strong>Load Cargo:</strong> Pick up vital construction materials, communication grids, mobile
+                        shelters, and heavy machinery at Base Ports.</li>
+                    <li><strong>Route Optimization:</strong> Deliver requests to contested sites before deadlines
+                        expire.</li>
+                    <li><strong>Prevent Domino Effect:</strong> If ports remain unsupplied in a high-need status, their
+                        urgency escalates. Critical ports will roll to become CONTESTED, blocking sea lanes until
+                        neighboring base nodes facilitate a recovery.</li>
                 </ul>
             </div>
         </div>
@@ -328,11 +352,15 @@
         <!-- Slide 7: Simulation -->
         <div class="slide">
             <div class="glass-panel">
-                <h2><span class="emoji-icon" style="margin:0; font-size: 2.5rem;">🚢</span> Simulation Engine & Realism</h2>
+                <h2><span class="emoji-icon" style="margin:0; font-size: 2.5rem;">🚢</span> Simulation Engine & Realism
+                </h2>
                 <ul>
-                    <li><strong>Authentic Operations:</strong> Uses real naval routes and maritime scenarios, including resource constraints and supply deficits.</li>
-                    <li><strong>Dynamic Scenarios:</strong> Generates realistic cargo delivery missions with authentic timelines and operational limits.</li>
-                    <li><strong>Training Value:</strong> Trains players to make high-stakes logistical decisions where efficiency, risk management, and timing directly determine mission success.</li>
+                    <li><strong>Authentic Operations:</strong> Uses real naval routes and maritime scenarios, including
+                        resource constraints and supply deficits.</li>
+                    <li><strong>Dynamic Scenarios:</strong> Generates realistic cargo delivery missions with authentic
+                        timelines and operational limits.</li>
+                    <li><strong>Training Value:</strong> Trains players to make high-stakes logistical decisions where
+                        efficiency, risk management, and timing directly determine mission success.</li>
                 </ul>
             </div>
         </div>
@@ -340,11 +368,15 @@
         <!-- Slide 8: Architecture -->
         <div class="slide">
             <div class="glass-panel">
-                <h2><span class="emoji-icon" style="margin:0; font-size: 2.5rem;">📡</span> Architecture & Data Modeling</h2>
+                <h2><span class="emoji-icon" style="margin:0; font-size: 2.5rem;">📡</span> Architecture & Data Modeling
+                </h2>
                 <ul>
-                    <li><strong>Data Inputs:</strong> JSON-based structures that can be easily modified to run off modern REST API inputs.</li>
-                    <li><strong>Weather Data Modeling:</strong> A matrix ocean simulation with 11 evolving weather states (ranging from calm to typhoons) driven by wind, waves, and swell.</li>
-                    <li><strong>Lightweight Deployment:</strong> 100% vanilla browser-based deployment; no installation barriers.</li>
+                    <li><strong>Data Inputs:</strong> JSON-based structures that can be easily modified to run off
+                        modern REST API inputs.</li>
+                    <li><strong>Weather Data Modeling:</strong> A matrix ocean simulation with 10 evolving weather
+                        states (ranging from calm to typhoons) driven by wind, waves, and swell.</li>
+                    <li><strong>Lightweight Deployment:</strong> 100% vanilla browser-based deployment; no installation
+                        barriers.</li>
                 </ul>
             </div>
         </div>
@@ -362,16 +394,16 @@
         const nextBtn = document.getElementById('nextBtn');
         const progressBar = document.getElementById('progressBar');
         const totalSlides = document.querySelectorAll('.slide').length;
-        
+
         let currentSlide = 0;
 
         function updateSlider() {
             slider.style.transform = `translateX(-${currentSlide * 100}vw)`;
             progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
-            
+
             prevBtn.style.opacity = currentSlide === 0 ? '0.3' : '1';
             nextBtn.style.opacity = currentSlide === totalSlides - 1 ? '0.3' : '1';
-            
+
             prevBtn.style.pointerEvents = currentSlide === 0 ? 'none' : 'all';
             nextBtn.style.pointerEvents = currentSlide === totalSlides - 1 ? 'none' : 'all';
         }
@@ -406,7 +438,7 @@
         document.addEventListener('click', (e) => {
             // Ignore if clicking buttons
             if (e.target.closest('.controls') || e.target.closest('.glass-panel')) return;
-            
+
             if (e.clientX > window.innerWidth / 2) {
                 nextSlide();
             } else {
@@ -418,4 +450,5 @@
         updateSlider();
     </script>
 </body>
+
 </html>
