@@ -12,6 +12,12 @@ class UI {
       modalChoices: document.getElementById("modal-choices"),
       toastContainer: document.getElementById("toast-container"),
     };
+
+    this.els.shipStatus.addEventListener("click", (event) => {
+      const button = event.target.closest("#hold-position-btn");
+      if (!button || button.disabled) return;
+      this.game.holdPosition(2);
+    });
   }
 
   renderSidebar() {
@@ -22,6 +28,7 @@ class UI {
 
   _renderShipStatus() {
     const state = this.game.state;
+    const holdState = this.game.holdPositionState;
     const total = this.game.getCargoTotal();
     const loc = state.traveling
       ? `In transit → ${this.game.map.ports[state.travelTo].name} (${state.travelDaysRemaining}d remaining)`
@@ -58,8 +65,13 @@ class UI {
       seaHtml = `<div class="weather-status"><span class="weather-label">Sea state</span><span class="sea-state ${sea.cls}">${sea.label}</span></div>`;
     }
 
+    const holdLabel = holdState.active
+      ? `Holding... ${holdState.daysLeft}d left`
+      : "Hold Position (2d)";
+    const holdDisabled = state.traveling || state.gameOver || holdState.active ? "disabled" : "";
+
     this.els.shipStatus.innerHTML =
-      `<h2>Ship Status</h2>` +
+      `<div class="ship-status-header"><h2>Ship Status</h2><button id="hold-position-btn" type="button" ${holdDisabled}>${holdLabel}</button></div>` +
       `<div class="ship-location">${loc}</div>` +
       `<div class="weather-status"><span class="weather-label">Weather: ${weatherLabel}</span>${weatherDetail}</div>` +
       seaHtml +
