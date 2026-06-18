@@ -175,7 +175,7 @@ class UI {
       
       let deadlineText = isCont
         ? `Recovery ETA: ${req.stageDaysLeft} days (-${1 + this.game._getSuppliedNeighborsCount(req.destination)}d/d)`
-        : (req.urgency === "critical" ? `Status: AT RISK (Rolls daily for Contested)` : `Deadline: Day ${this.game.state.day + req.stageDaysLeft} (${req.stageDaysLeft}d left)`);
+        : (req.urgency === "critical" ? `Status: AT RISK (Rolls daily for Contested)` : `Escalates in ${req.stageDaysLeft} day(s)`);
 
       html += `<div class="request-card ${urgClass}">` +
         `<div class="req-header"><span class="req-dest">${req.destinationName}</span>` +
