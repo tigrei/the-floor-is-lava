@@ -9,6 +9,41 @@ const SUPPLY_TYPES = {
   "Equipment": { name: "Heavy Construction Equipment",   weight_lbs: 200000, length_ft: 45.0, width_ft: 12.0 },
 };
 
+const SUPPLY_ALTERNATIVES={
+  Fuel:[
+    {name:"JP-8 Fuel Bladder Modules",weight_lbs:52000,length_ft:20.0,width_ft:8.0},
+    {name:"Tactical Fuel Storage Modules",weight_lbs:45000,length_ft:20.0,width_ft:8.0},
+  ],
+  Water:[
+    {name:"Palletized Bottled Water",weight_lbs:35000,length_ft:20.0,width_ft:8.0},
+    {name:"Containerized Water Purification Units",weight_lbs:38000,length_ft:20.0,width_ft:8.0},
+  ],
+  Food:[
+    {name:"MRE Pallet Loads",weight_lbs:15000,length_ft:10.0,width_ft:8.0},
+    {name:"Field Kitchen Supply Modules",weight_lbs:28000,length_ft:20.0,width_ft:8.0},
+  ],
+  Ammo:[
+    {name:"Artillery Ammunition Containers",weight_lbs:40000,length_ft:20.0,width_ft:8.0},
+    {name:"Mixed Ordnance Pallet Loads",weight_lbs:30000,length_ft:10.0,width_ft:8.0},
+  ],
+  Medical:[
+    {name:"Deployable Hospital Kits",weight_lbs:25000,length_ft:20.0,width_ft:8.0},
+    {name:"Medical ISO Containers",weight_lbs:32000,length_ft:20.0,width_ft:8.0},
+  ],
+  Comms:[
+    {name:"Command Post Communications Vans",weight_lbs:30000,length_ft:24.0,width_ft:8.0},
+    {name:"Relay Communications Shelters",weight_lbs:22000,length_ft:20.0,width_ft:8.0},
+  ],
+  Steel:[
+    {name:"Prefabricated Steel Bridge Sections",weight_lbs:520000,length_ft:80.0,width_ft:16.0},
+    {name:"Steel Pipe & Structural Beam Loads",weight_lbs:150000,length_ft:40.0,width_ft:10.0},
+  ],
+  Equipment:[
+    {name:"Caterpillar D9 Bulldozers",weight_lbs:114000,length_ft:17.5,width_ft:14.0},
+    {name:"Liebherr LTM 1500 Mobile Cranes",weight_lbs:500000,length_ft:65.0,width_ft:10.5},
+  ],
+};
+
 const REQUEST_TEMPLATES = [
   { mission: "Airfield damage repair — runway cratered by loitering munitions",     supplies: { "Steel": 35, "Equipment": 20 },             urgencyPool: ["high"] },
   { mission: "Garrison water contaminated — emergency purification needed",          supplies: { "Water": 50 },                              urgencyPool: ["high"] },
